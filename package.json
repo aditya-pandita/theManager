@@ -1,0 +1,30 @@
+{
+  "name": "decidr-code",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "sidecar",
+    "docs/app"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n \"server,web\" -c \"cyan,magenta\" \"npm run dev:server\" \"npm run dev:web\"",
+    "dev:tauri": "npx tauri dev",
+    "dev:server": "npm run dev --workspace=packages/server",
+    "dev:web": "npm run dev --workspace=packages/web",
+    "dev:mcp": "npm run dev --workspace=packages/mcp",
+    "dev:bridge": "npm run dev --workspace=packages/file-bridge",
+    "dev:docs": "npm run dev --workspace=docs/app",
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm run start --workspace=packages/server",
+    "db:migrate": "npm run db:migrate --workspace=packages/core",
+    "db:generate": "npm run db:generate --workspace=packages/core",
+    "db:studio": "npm run db:studio --workspace=packages/core"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1",
+    "concurrently": "^8.2.2",
+    "drizzle-orm": "^0.31.4",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5"
+  }
+}

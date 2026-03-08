@@ -1,0 +1,36 @@
+{
+  "name": "decidr-code",
+  "displayName": "Decidr Code",
+  "description": "AI-assisted change tracker with decision trees",
+  "version": "0.1.0",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "decidr-code", "title": "Decidr Code", "icon": "$(circuit-board)" }
+      ]
+    },
+    "views": {
+      "decidr-code": [
+        { "type": "webview", "id": "decidr-code.board", "name": "Board" }
+      ]
+    },
+    "commands": [
+      { "command": "decidr-code.createTicket",  "title": "Decidr Code: Create Ticket" },
+      { "command": "decidr-code.listTickets",   "title": "Decidr Code: List Tickets" },
+      { "command": "decidr-code.processTicket", "title": "Decidr Code: Process Ticket" }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node esbuild.js",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
+  }
+}

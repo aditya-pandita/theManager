@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: decidr-code-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: decidr_code
+      POSTGRES_USER: decidr_code
+      POSTGRES_PASSWORD: decidr_code_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

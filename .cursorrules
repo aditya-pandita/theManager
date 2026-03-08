@@ -1,0 +1,95 @@
+# Decidr Code — Cursor MCP Instructions
+
+This project has a Decidr Code MCP server available. Use these tools to manage the AI-assisted kanban board.
+
+## Prerequisites (must be running)
+
+```bash
+docker compose up -d          # PostgreSQL on :5434
+npm run dev:server            # REST API on :3117
+# Then in Cursor: Settings → MCP → verify "decidr-code" shows green
+```
+
+---
+
+## Available MCP Tools
+
+### Project tools
+- **list-projects** — List all projects with their folder paths
+- **create-ticket** — Create a new ticket (accepts `projectId` to assign to a project)
+- **list-tickets** — List/filter tickets (`projectId`, `status`, `priority`, `search`)
+
+### Ticket lifecycle
+- **update-ticket** — Update ticket fields (title, description, priority, tags)
+- **move-ticket** — Move ticket between columns: `backlog → todo → in_progress → review → done`
+- **add-comment** — Add a comment to a ticket
+- **process-ticket** — Analyze ticket with Claude, generate reasoning tree + diff
+- **get-reasoning** — Read the decision tree for a processed ticket
+
+---
+
+## Available MCP Resources
+
+- `decidr-code://board` — Current board state grouped by column
+- `decidr-code://ticket/{id}` — Full ticket detail with reasoning and comments
+- `decidr-code://stats` — Dashboard metrics
+
+---
+
+## Available MCP Prompts
+
+- **analyze-ticket** — System prompt for analyzing a specific ticket
+- **review-diff** — System prompt for reviewing a code change
+
+---
+
+## Workflow: Ticket → Cursor → Done
+
+### 1. Discover what needs doing
+```
+list-projects                              # find your project ID
+list-tickets projectId=PROJ-XXXXX status=todo
+```
+
+### 2. Pick up a ticket
+```
+move-ticket  DC-XXXXX  in_progress
+```
+
+### 3. Make code changes in Cursor
+Work normally. When done, describe what you changed.
+
+### 4. Process the ticket (generates reasoning + diff)
+```
+process-ticket  DC-XXXXX
+```
+Claude analyzes the ticket and writes a decision tree explaining *why* each choice was made.
+
+### 5. Mark done
+```
+move-ticket  DC-XXXXX  done
+add-comment  DC-XXXXX  "Implemented — see reasoning tree for rationale"
+```
+
+---
+
+## Creating a ticket from a task
+
+If you spot something that needs fixing while coding:
+```
+create-ticket
+  title: "Fix CORS headers on /api/users"
+  description: "OPTIONS preflight returns 404 — add cors middleware"
+  priority: high
+  tags: ["bug", "infra"]
+  projectId: PROJ-XXXXX
+```
+
+---
+
+## Stack
+
+- React + Vite + Tailwind frontend on :5173
+- Node.js REST API on :3117
+- PostgreSQL via Drizzle ORM (Docker on :5434)
+- MCP server via stdio transport

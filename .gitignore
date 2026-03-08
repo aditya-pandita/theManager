@@ -1,0 +1,12 @@
+node_modules/
+dist/
+data/
+.cj/
+.env
+src-tauri/binaries/
+src-tauri/target/
+pgdata/
+*.vsix
+.decidr/
+*.tsbuildinfo
+.DS_Store

@@ -1,0 +1,275 @@
+Issue Type,Issue ID,Parent ID,Summary,Description,Priority,Story Points,Labels,Sprint,Acceptance Criteria
+Epic,EP-01,,Project Foundation,"Monorepo scaffolding, Docker, CI config, .gitignore, sidecar scaffold",Highest,11,"foundation,infra",Sprint 1,
+Epic,EP-02,,Core Engine & Database,"Headless data layer with Drizzle ORM, PostgreSQL schema, repositories, services, hooks",Highest,26,"core,database",Sprint 1,
+Epic,EP-03,,REST API Server,HTTP routes wrapping core services for frontend consumption,Highest,13,"server,api",Sprint 2,
+Epic,EP-04,,MCP Server,"stdio MCP server with tools, resources, and prompts for editor integration",Highest,18,"mcp,integration",Sprint 2,
+Epic,EP-05,,File Bridge,.decidr/ folder watcher for editor-agnostic file-based integration,High,8,"file-bridge,integration",Sprint 2,
+Epic,EP-06,,Frontend — Shell & Board,"React app shell, kanban board, ticket cards, layout, stores",Highest,18,"frontend,board",Sprint 3,
+Epic,EP-07,,Frontend — Ticket Detail & Reasoning,"Detail modal, diff viewer, decision tree, step-by-step logs, comments, history",Highest,26,"frontend,reasoning",Sprint 3-4,
+Epic,EP-08,,Frontend — Create & Panels,"Ticket creation modal, hooks log panel, stats dashboard",High,13,"frontend,panels",Sprint 4,
+Epic,EP-09,,Tauri Desktop Shell,"Native desktop window, Node.js sidecar lifecycle, system tray",Highest,13,"tauri,desktop",Sprint 5,
+Epic,EP-10,,VS Code / Cursor Extension,"Sidebar panel, commands, API client for VS Code and Cursor",High,10,"extension,cursor",Sprint 5,
+Epic,EP-11,,Interactive Documentation,"Doc site with live demos, API tester, schema viewer, tree demo",Medium,13,docs,Sprint 6,
+Epic,EP-12,,Editor Integration & ECC,"Config files, everything-claude-code integration, agent definitions",Medium,8,"ecc,integration",Sprint 6,
+Story,US-001,EP-01,"As a developer, I want a monorepo scaffold so that all packages share config and can be developed together",,Highest,3,foundation,Sprint 1,npm workspaces configured; tsconfig.base.json shared; npm install works at root; npm run dev starts server + web
+Story,US-002,EP-01,"As a developer, I want a local PostgreSQL instance so that I can develop against a real database",,Highest,2,"database,docker",Sprint 1,docker compose up -d starts PostgreSQL 16; Database decidr_code created; Connection string works from Node.js
+Story,US-003,EP-01,"As a developer, I want proper git configuration so that generated files are excluded",,High,1,foundation,Sprint 1,".gitignore excludes node_modules, dist, data, .cj, .env, src-tauri/binaries, pgdata"
+Story,US-004,EP-01,"As a developer, I want the sidecar package scaffolded so that the Node server can be compiled to a binary later",,Medium,2,"sidecar,tauri",Sprint 1,"sidecar/ directory with package.json, tsconfig, build script; build.sh compiles with pkg"
+Story,US-005,EP-01,"As a developer, I want hook scripts scaffolded so that the event system has scripts to execute",,Medium,1,hooks,Sprint 1,"hooks/ directory with SessionStart.sh, TicketCreated.sh, TicketMoved.sh, PostSave.sh"
+Story,US-006,EP-02,"As a developer, I want TypeScript type definitions so that all packages share a single source of truth for data shapes",,Highest,3,"types,core",Sprint 1,"All types exported from @decidr-code/core; Ticket, Reasoning, TreeNode, LogEntry, HookEvent defined; Union string types"
+Story,US-007,EP-02,"As a developer, I want a PostgreSQL schema with proper relations so that data is stored efficiently",,Highest,5,"database,schema",Sprint 1,"7 tables created; Foreign keys with CASCADE; Indexes on status, priority, confidence; JSONB for tree and logs; Clean on fresh DB"
+Story,US-008,EP-02,"As a developer, I want a database connection module so that all repositories share a single client",,Highest,2,database,Sprint 1,Reads DATABASE_URL from env; Single drizzle instance exported; Handles errors gracefully
+Story,US-009,EP-02,"As a developer, I want repository classes so that each table has clean CRUD operations",,Highest,8,"core,repositories",Sprint 1,Each repo under 60 lines; ticket-repo includes joins; All repos return typed results
+Story,US-010,EP-02,"As a developer, I want service classes so that business logic is separated from data access",,Highest,5,"core,services",Sprint 1,Services orchestrate repos + hooks; ticket-service handles CRUD with changelog; reasoning-service validates trees
+Story,US-011,EP-02,"As a developer, I want a hook execution system so that bash scripts fire on events",,High,2,"hooks,core",Sprint 1,fireHook() logs to DB AND executes bash script; 5s timeout; Failures logged but non-blocking
+Story,US-012,EP-02,"As a developer, I want shared constants so that columns, priorities, tags, and node types are defined once",,High,1,"constants,core",Sprint 1,Constants exported from core; Used by all packages
+Story,US-013,EP-03,"As a frontend developer, I want a REST API so that the React app can read and write tickets",,Highest,5,"server,api",Sprint 2,JSON responses with CORS; Ticket CRUD endpoints; Comments endpoints; Error responses with status codes; PORT from env
+Story,US-014,EP-03,"As a frontend developer, I want reasoning and stats endpoints so that the UI can display decision trees and dashboards",,High,3,"server,api",Sprint 2,Reasoning GET/PUT by ticket ID; Stats aggregation endpoint; Hooks log endpoint
+Story,US-015,EP-03,"As a developer, I want a Claude API proxy endpoint so that the frontend can trigger ticket processing without exposing the API key",,High,3,"server,claude-api",Sprint 2,POST /api/process accepts ticketId; Reads ANTHROPIC_API_KEY from env; Saves reasoning to DB; Handles errors
+Story,US-016,EP-03,"As a developer, I want HTTP utility functions so that route handlers are clean",,High,2,"server,utils",Sprint 2,"parseBody, sendJSON, sendError, CORS middleware"
+Story,US-017,EP-04,"As a Cursor/Claude Code user, I want MCP tools so that I can create and manage tickets from inside my editor",,Highest,8,"mcp,tools",Sprint 2,7 tools registered via stdio; Proper zod schemas; Tools call core services; Cursor lists tools correctly
+Story,US-018,EP-04,"As an editor, I want MCP resources so that I can read current board state and ticket details",,High,3,"mcp,resources",Sprint 2,3 resources with proper URIs; Board grouped by column; Ticket by ID; Stats aggregation
+Story,US-019,EP-04,"As an editor, I want MCP prompts so that I can analyze tickets and review diffs with pre-built system prompts",,Medium,2,"mcp,prompts",Sprint 2,2 prompts registered; analyze-ticket returns system+user pair; review-diff for code review
+Story,US-020,EP-04,"As a developer, I want editor config files so that MCP connects automatically",,High,2,"mcp,config",Sprint 2,.cursor/mcp.json; .claude/settings.json; .cursorrules; CLAUDE.md
+Story,US-021,EP-05,"As a developer using any editor, I want to create tickets by dropping JSON files so that I don't need MCP support",,Medium,3,file-bridge,Sprint 2,JSON in .decidr/inbox/ creates ticket; Inbox file deleted after processing; Invalid JSON goes to .decidr/errors/
+Story,US-022,EP-05,"As a developer, I want the current board state written to a file so that any tool can read it",,Medium,2,file-bridge,Sprint 2,.decidr/board.json always current; Updated after mutations; .decidr/outbox/{id}.json after reasoning
+Story,US-023,EP-06,"As a user, I want a React app shell with navigation so that I can switch between Board, Hooks, and Stats views",,Highest,5,"frontend,shell",Sprint 3,"Header with logo and progress; Nav tabs switch views; Toolbar with search, filters, new button; Dark theme"
+Story,US-024,EP-06,"As a user, I want layout components so that the app has a consistent header, navigation, and toolbar",,Highest,3,"frontend,layout",Sprint 3,"Header.tsx, NavTabs.tsx, Toolbar.tsx all under 35 lines"
+Story,US-025,EP-06,"As a user, I want a kanban board so that I can see all tickets organized by status column",,Highest,5,"frontend,board",Sprint 3,"5 columns; Ticket counts; Cards with ID, title, priority, tags, indicators; Search + filter; Click opens detail"
+Story,US-026,EP-06,"As a user, I want shared UI components so that badges, tags, and avatars are consistent",,High,2,"frontend,shared",Sprint 3,"Modal, Badge, Tag, Avatar, ProgressBar, EmptyState — all reusable"
+Story,US-027,EP-07,"As a user, I want a ticket detail modal so that I can view all information about a ticket in one place",,Highest,5,"frontend,detail",Sprint 3,Modal on card click; Header with badges + move buttons; 5 tabs; ESC to close
+Story,US-028,EP-07,"As a user, I want a side-by-side diff viewer so that I can see what code Claude changed",,Highest,3,"frontend,diff",Sprint 3,Two panes: BEFORE red / AFTER green; File path header; Line numbers; Empty state
+Story,US-029,EP-07,"As a user, I want to trigger Claude processing from the UI so that reasoning and diffs are generated",,Highest,3,"frontend,processing",Sprint 3,Process button calls /api/process; Spinner during processing; Reasoning tab populated on completion
+Story,US-030,EP-07,"As a user, I want an interactive decision tree so that I can understand WHY Claude made each choice",,Highest,8,"frontend,reasoning",Sprint 4,Recursive tree with 8 node types; Expand/collapse; Detail text; Legend; Summary bar; Toggle tree/logs view
+Story,US-031,EP-07,"As a user, I want a comment thread so that I can discuss tickets with Claude",,High,3,"frontend,comments",Sprint 4,Avatar-based comments; Author + timestamp; Input with Enter-to-send; Optimistic update
+Story,US-032,EP-07,"As a user, I want a history timeline so that I can see every action taken on a ticket",,High,2,"frontend,history",Sprint 4,"Vertical timeline; Colored dots (purple=Claude, amber=user); Action text + metadata"
+Story,US-033,EP-07,"As a user, I want a media drop zone so that I can attach screenshots and GIFs to tickets",,Low,2,"frontend,media",Sprint 4,Dashed drop zone; Drag visual feedback; File type indicators
+Story,US-034,EP-08,"As a user, I want a ticket creation modal so that I can add new tickets with all details",,Highest,5,"frontend,create",Sprint 4,"Title required; Description, priority picker, tag picker, code attachment; Create disabled until title filled; Instant board update"
+Story,US-035,EP-08,"As a user, I want a hooks log panel so that I can see what events have fired",,Medium,2,"frontend,hooks",Sprint 4,Reverse chronological; Color-coded event badges; Payload summary; Auto-refresh 5s
+Story,US-036,EP-08,"As a user, I want a stats dashboard so that I can see project health at a glance",,Medium,3,"frontend,stats",Sprint 4,"Cards: total, completed, in progress, with reasoning, avg confidence, reasoning time; Color-coded"
+Story,US-037,EP-09,"As a user, I want Decidr Code to run as a native desktop application so that I don't need a browser",,Highest,5,"tauri,desktop",Sprint 5,Native window 1280x800; Sidecar starts on launch; Waits for ready; Kills on close
+Story,US-038,EP-09,"As a user, I want a system tray icon so that I can minimize Decidr Code to the background",,Medium,3,"tauri,tray",Sprint 5,"Tray icon; Menu: Show Window, Quit; Minimize to tray on close"
+Story,US-039,EP-09,"As a developer, I want a sidecar build pipeline so that the Node server compiles to a standalone binary",,High,3,"sidecar,build",Sprint 5,build.sh produces binary; Correct target triple suffix; Binary runs server + migrations
+Story,US-040,EP-10,"As a Cursor/VS Code user, I want a sidebar panel so that I can see the board without leaving my editor",,High,5,"extension,sidebar",Sprint 5,Activity bar icon; Compact ticket list by status; Click opens detail; Auto-refresh
+Story,US-041,EP-10,"As a Cursor/VS Code user, I want commands so that I can create tickets and trigger processing from the command palette",,High,3,"extension,commands",Sprint 5,"Create Ticket, List Tickets, Process Ticket commands"
+Story,US-042,EP-10,"As a developer, I want an API client utility so that the extension can talk to the REST server",,High,2,"extension,api",Sprint 5,Fetch wrapper; .decidr/ file fallback if server unreachable
+Story,US-043,EP-11,"As a developer, I want interactive documentation so that I can understand the architecture, API, and schemas",,Medium,8,"docs,interactive",Sprint 6,Vite app with sidebar nav; CodeBlock + copy; API tester; Schema viewer; Tree demo
+Story,US-044,EP-11,"As a developer, I want doc content pages covering every feature",,Medium,5,"docs,content",Sprint 6,"Pages: Architecture, API Reference, MCP Tools, Schemas, Hooks, Agents, Reasoning, Editor Setup, Extending"
+Story,US-045,EP-12,"As a developer, I want everything-claude-code integrated so that I get 13+ agents, 50+ skills, and hooks",,Low,3,ecc,Sprint 6,"ECC cloned as submodule; Agents, skills, rules copied to ~/.claude/; AgentShield scan passes"
+Story,US-046,EP-12,"As a developer, I want agent definitions optimized for Decidr Code so that tickets route to the right specialist",,Medium,3,agents,Sprint 6,"4 agents: bug-triager, refactor-planner, code-reviewer, perf-analyzer"
+Task,TK-001,US-001,Initialize root package.json with npm workspaces,,Highest,1,,Sprint 1,
+Task,TK-002,US-001,Create tsconfig.base.json with shared TS compiler options,,Highest,1,,Sprint 1,
+Task,TK-003,US-001,"Create package.json for each package (core, server, mcp, file-bridge, web)",,Highest,1,,Sprint 1,
+Task,TK-004,US-002,Create docker-compose.yml with PostgreSQL 16 Alpine,,Highest,1,,Sprint 1,
+Task,TK-005,US-002,"Create .env with DATABASE_URL, PORT, ANTHROPIC_API_KEY",,Highest,1,,Sprint 1,
+Task,TK-006,US-003,Create .gitignore with all exclusion patterns,,High,1,,Sprint 1,
+Task,TK-007,US-004,Create sidecar/package.json with pkg dependency,,Medium,1,,Sprint 1,
+Task,TK-008,US-004,Create sidecar/build.sh that compiles and renames binary,,Medium,1,,Sprint 1,
+Task,TK-009,US-005,Create hooks/ directory with all bash scripts,,Medium,1,,Sprint 1,
+Task,TK-010,US-006,"Create types/ticket.ts — Ticket, Diff, Status, Priority, Tag, NewTicket",,Highest,1,,Sprint 1,
+Task,TK-011,US-006,"Create types/reasoning.ts — Reasoning, TreeNode, LogEntry, NodeType, Phase",,Highest,1,,Sprint 1,
+Task,TK-012,US-006,Create types/hook.ts — HookEvent,,Highest,1,,Sprint 1,
+Task,TK-013,US-006,"Create types/config.ts — AppConfig, resolveConfig()",,High,1,,Sprint 1,
+Task,TK-014,US-007,Define tickets table in Drizzle schema,,Highest,1,,Sprint 1,
+Task,TK-015,US-007,Define diffs table with FK to tickets,,Highest,1,,Sprint 1,
+Task,TK-016,US-007,Define reasoning table with FK to tickets (unique constraint),,Highest,1,,Sprint 1,
+Task,TK-017,US-007,Define comments table with FK to tickets,,Highest,1,,Sprint 1,
+Task,TK-018,US-007,Define changelog table with FK to tickets,,Highest,1,,Sprint 1,
+Task,TK-019,US-007,Define hook_events table,,High,1,,Sprint 1,
+Task,TK-020,US-007,Define sessions table,,High,1,,Sprint 1,
+Task,TK-021,US-007,"Add all indexes (status, priority, confidence, FKs, event, created_at)",,High,1,,Sprint 1,
+Task,TK-022,US-007,Define Drizzle relations between tables,,High,1,,Sprint 1,
+Task,TK-023,US-008,Create db/connection.ts — postgres client + drizzle wrapper,,Highest,1,,Sprint 1,
+Task,TK-024,US-008,Create db/migrate.ts — run migrations on startup,,Highest,1,,Sprint 1,
+Task,TK-025,US-009,Create ticket-repo.ts — full CRUD with joins and filters,,Highest,3,,Sprint 1,
+Task,TK-026,US-009,"Create comment-repo.ts — create, findByTicket",,Highest,1,,Sprint 1,
+Task,TK-027,US-009,"Create changelog-repo.ts — append, findByTicket",,Highest,1,,Sprint 1,
+Task,TK-028,US-009,"Create reasoning-repo.ts — upsert, findByTicket",,Highest,1,,Sprint 1,
+Task,TK-029,US-009,"Create hook-repo.ts — append, getRecent",,High,1,,Sprint 1,
+Task,TK-030,US-009,"Create session-repo.ts — create, findAll",,High,1,,Sprint 1,
+Task,TK-031,US-010,"Create ticket-service.ts — createTicket, updateTicket, moveTicket, deleteTicket, getBoard, getTicketDetail",,Highest,3,,Sprint 1,
+Task,TK-032,US-010,"Create reasoning-service.ts — saveReasoning with tree validation, getReasoning",,Highest,1,,Sprint 1,
+Task,TK-033,US-010,Create stats-service.ts — getDashboard aggregation,,High,1,,Sprint 1,
+Task,TK-034,US-011,Create hooks/runner.ts — fireHook with DB logging and bash execution,,High,1,,Sprint 1,
+Task,TK-035,US-011,Create hooks/events.ts — event name constants,,High,1,,Sprint 1,
+Task,TK-036,US-011,Create utils/id.ts and utils/timestamp.ts,,High,1,,Sprint 1,
+Task,TK-037,US-012,"Create constants/ — columns.ts, priorities.ts, tags.ts, node-types.ts",,High,1,,Sprint 1,
+Task,TK-038,US-013,"Create server entry (index.ts) — HTTP server, route mounting, static serving",,Highest,2,,Sprint 2,
+Task,TK-039,US-013,Create routes/tickets.ts — full CRUD endpoints,,Highest,2,,Sprint 2,
+Task,TK-040,US-013,Create routes/comments.ts — GET and POST by ticket,,Highest,1,,Sprint 2,
+Task,TK-041,US-014,Create routes/reasoning.ts — GET and PUT by ticket,,High,1,,Sprint 2,
+Task,TK-042,US-014,Create routes/stats.ts — GET /api/stats,,High,1,,Sprint 2,
+Task,TK-043,US-014,Create routes/hooks.ts — GET /api/hooks,,High,1,,Sprint 2,
+Task,TK-044,US-015,Create routes/process.ts — Claude API proxy,,High,2,,Sprint 2,
+Task,TK-045,US-015,Create prompts/analyze-ticket.txt — system prompt for reasoning generation,,High,1,,Sprint 2,
+Task,TK-046,US-016,"Create utils/http.ts — parseBody, sendJSON, sendError, CORS",,High,2,,Sprint 2,
+Task,TK-047,US-017,Create MCP server entry — McpServer + StdioTransport + register all,,Highest,2,,Sprint 2,
+Task,TK-048,US-017,Create tools/create-ticket.ts,,Highest,1,,Sprint 2,
+Task,TK-049,US-017,Create tools/update-ticket.ts,,High,1,,Sprint 2,
+Task,TK-050,US-017,Create tools/move-ticket.ts,,High,1,,Sprint 2,
+Task,TK-051,US-017,Create tools/add-comment.ts,,High,1,,Sprint 2,
+Task,TK-052,US-017,Create tools/process-ticket.ts — trigger Claude analysis + save reasoning,,Highest,2,,Sprint 2,
+Task,TK-053,US-017,Create tools/list-tickets.ts,,High,1,,Sprint 2,
+Task,TK-054,US-017,Create tools/get-reasoning.ts,,High,1,,Sprint 2,
+Task,TK-055,US-018,Create resources/board.ts — decidr-code://board,,High,1,,Sprint 2,
+Task,TK-056,US-018,Create resources/ticket.ts — decidr-code://ticket/{id},,High,1,,Sprint 2,
+Task,TK-057,US-018,Create resources/stats.ts — decidr-code://stats,,High,1,,Sprint 2,
+Task,TK-058,US-019,Create prompts/analyze-ticket.ts,,Medium,1,,Sprint 2,
+Task,TK-059,US-019,Create prompts/review-diff.ts,,Medium,1,,Sprint 2,
+Task,TK-060,US-020,Create .cursor/mcp.json for Cursor,,High,1,,Sprint 2,
+Task,TK-061,US-020,Create .claude/settings.json for Claude Code,,High,1,,Sprint 2,
+Task,TK-062,US-020,Create .cursorrules with MCP tool usage instructions,,High,1,,Sprint 2,
+Task,TK-063,US-020,Create CLAUDE.md with full project context,,High,1,,Sprint 2,
+Task,TK-064,US-021,Create file-bridge entry (index.ts) — boot watcher + writer,,Medium,1,,Sprint 2,
+Task,TK-065,US-021,Create watcher.ts — fs.watch on .decidr/inbox/ with debounce,,Medium,1,,Sprint 2,
+Task,TK-066,US-021,Create reader.ts — parse and validate inbox JSON files,,Medium,1,,Sprint 2,
+Task,TK-067,US-022,"Create writer.ts — writeBoardState(), writeProcessingResult()",,Medium,2,,Sprint 2,
+Task,TK-068,US-023,Initialize Vite + React + Tailwind project in packages/web,,Highest,1,,Sprint 3,
+Task,TK-069,US-023,"Create Zustand stores (ticket-store, ui-store, hook-store)",,Highest,2,,Sprint 3,
+Task,TK-070,US-023,Create API client (client.ts),,Highest,1,,Sprint 3,
+Task,TK-071,US-023,Create App.tsx — layout + view routing,,Highest,1,,Sprint 3,
+Task,TK-072,US-024,"Create Header.tsx — logo, title, done/total progress bar",,Highest,1,,Sprint 3,
+Task,TK-073,US-024,"Create NavTabs.tsx — Board, Hooks, Stats with badge counts",,Highest,1,,Sprint 3,
+Task,TK-074,US-024,"Create Toolbar.tsx — search, priority filters, new ticket button",,Highest,1,,Sprint 3,
+Task,TK-075,US-025,Create Board.tsx — renders 5 Column components with filtered tickets,,Highest,1,,Sprint 3,
+Task,TK-076,US-025,Create Column.tsx — header + card list + empty state,,Highest,2,,Sprint 3,
+Task,TK-077,US-025,Create TicketCard.tsx — card with all visual elements and click handler,,Highest,2,,Sprint 3,
+Task,TK-078,US-026,"Create shared components — Modal, Badge, Tag, Avatar, ProgressBar, EmptyState",,High,2,,Sprint 3,
+Task,TK-079,US-027,"Create TicketDetail.tsx — modal wrapper, tab routing",,Highest,2,,Sprint 3,
+Task,TK-080,US-027,"Create TicketHeader.tsx — ID, title, badges, move buttons",,Highest,2,,Sprint 3,
+Task,TK-081,US-027,Create TabBar.tsx — 5-tab switcher with active state,,Highest,1,,Sprint 3,
+Task,TK-082,US-028,Create DiffView.tsx — side-by-side code display with line numbers,,Highest,3,,Sprint 3,
+Task,TK-083,US-029,Create ProcessButton.tsx — trigger + loading + error states,,Highest,3,,Sprint 3,
+Task,TK-084,US-030,Create ReasoningTab.tsx — container with summary bar + view toggle,,Highest,1,,Sprint 4,
+Task,TK-085,US-030,"Create SummaryBar.tsx — confidence, time, summary text",,Highest,1,,Sprint 4,
+Task,TK-086,US-030,Create TreeView.tsx — renders root TreeNode + TreeLegend,,Highest,1,,Sprint 4,
+Task,TK-087,US-030,"Create TreeNode.tsx — recursive with expand/collapse, detail, children",,Highest,3,,Sprint 4,
+Task,TK-088,US-030,Create TreeLegend.tsx — color-coded node type legend,,High,1,,Sprint 4,
+Task,TK-089,US-030,Create LogList.tsx — renders LogEntry list + total time footer,,High,1,,Sprint 4,
+Task,TK-090,US-030,"Create LogEntry.tsx — expandable: step, phase, action, WHY, duration bar",,High,1,,Sprint 4,
+Task,TK-091,US-031,Create CommentList.tsx — threaded comment display,,High,1,,Sprint 4,
+Task,TK-092,US-031,Create CommentInput.tsx — input + send with Enter key,,High,1,,Sprint 4,
+Task,TK-093,US-031,"Wire comments to API — POST on send, refresh on success",,High,1,,Sprint 4,
+Task,TK-094,US-032,Create HistoryTimeline.tsx — vertical timeline with colored dots,,High,2,,Sprint 4,
+Task,TK-095,US-033,Create MediaDrop.tsx — drag-and-drop zone with visual feedback,,Low,2,,Sprint 4,
+Task,TK-096,US-034,Create CreateModal.tsx — form layout and submission logic,,Highest,2,,Sprint 4,
+Task,TK-097,US-034,Create PriorityPicker.tsx — 4-button selector,,Highest,1,,Sprint 4,
+Task,TK-098,US-034,Create TagPicker.tsx — multi-select tag buttons,,Highest,1,,Sprint 4,
+Task,TK-099,US-034,Create CodeAttach.tsx — file path + code textarea,,High,1,,Sprint 4,
+Task,TK-100,US-035,Create HooksPanel.tsx — event log with auto-refresh,,Medium,2,,Sprint 4,
+Task,TK-101,US-036,Create StatsPanel.tsx — grid container,,Medium,1,,Sprint 4,
+Task,TK-102,US-036,Create StatCard.tsx — single metric card,,Medium,1,,Sprint 4,
+Task,TK-103,US-036,Wire stats to API — fetch on tab switch,,Medium,1,,Sprint 4,
+Task,TK-104,US-037,Initialize Tauri v2 in project (tauri init),,Highest,1,,Sprint 5,
+Task,TK-105,US-037,"Configure tauri.conf.json — window, sidecar, build paths",,Highest,1,,Sprint 5,
+Task,TK-106,US-037,"Implement main.rs — spawn sidecar, poll readiness, load webview, cleanup",,Highest,2,,Sprint 5,
+Task,TK-107,US-037,Configure capabilities/default.json — shell permissions for sidecar,,Highest,1,,Sprint 5,
+Task,TK-108,US-038,Create tray.rs — system tray with CJ icon,,Medium,1,,Sprint 5,
+Task,TK-109,US-038,"Add tray menu: Show Window, Separator, Quit",,Medium,1,,Sprint 5,
+Task,TK-110,US-038,Minimize to tray on window close instead of quitting,,Medium,1,,Sprint 5,
+Task,TK-111,US-039,Create sidecar/src/index.ts — boots server + file-bridge + migrations,,High,1,,Sprint 5,
+Task,TK-112,US-039,"Create build.sh — compile with pkg, rename, copy to binaries/",,High,1,,Sprint 5,
+Task,TK-113,US-039,Test: compiled binary starts and serves API on :3117,,High,1,,Sprint 5,
+Task,TK-114,US-040,Create extension manifest (package.json) with contributes.views,,High,1,,Sprint 5,
+Task,TK-115,US-040,"Create extension.ts — activate, register sidebar, register commands",,High,1,,Sprint 5,
+Task,TK-116,US-040,Create sidebar/provider.ts — WebviewViewProvider,,High,2,,Sprint 5,
+Task,TK-117,US-040,Create sidebar/webview.ts — HTML generation for compact board,,High,1,,Sprint 5,
+Task,TK-118,US-041,"Create commands/create-ticket.ts — input boxes for title, priority",,High,1,,Sprint 5,
+Task,TK-119,US-041,Create commands/list-tickets.ts — quick pick showing all tickets,,High,1,,Sprint 5,
+Task,TK-120,US-041,Create commands/process-ticket.ts — process selected ticket,,High,1,,Sprint 5,
+Task,TK-121,US-042,Create utils/api-client.ts — fetch wrapper with .decidr/ fallback,,High,2,,Sprint 5,
+Task,TK-122,US-043,Initialize docs/app Vite project,,Medium,1,,Sprint 6,
+Task,TK-123,US-043,Create Sidebar.tsx — nav with sections + search,,Medium,1,,Sprint 6,
+Task,TK-124,US-043,Create CodeBlock.tsx — syntax highlight + copy,,Medium,1,,Sprint 6,
+Task,TK-125,US-043,Create SchemaViewer.tsx — expandable JSON schema explorer,,Medium,2,,Sprint 6,
+Task,TK-126,US-043,Create ApiTester.tsx — in-browser endpoint tester,,Medium,2,,Sprint 6,
+Task,TK-127,US-043,Create TreeDemo.tsx — live decision tree with sample data,,Medium,1,,Sprint 6,
+Task,TK-128,US-044,Write Architecture page,,Medium,1,,Sprint 6,
+Task,TK-129,US-044,Write API Reference page,,Medium,1,,Sprint 6,
+Task,TK-130,US-044,Write MCP Tools page,,Medium,1,,Sprint 6,
+Task,TK-131,US-044,"Write Schemas, Hooks, Agents, Reasoning pages",,Medium,1,,Sprint 6,
+Task,TK-132,US-044,"Write Editor Setup page — Cursor, Claude Code, Windsurf, VS Code, CLI",,Medium,1,,Sprint 6,
+Task,TK-133,US-044,"Write Extending page — Claude API, WebSocket, Docker, CI/CD",,Medium,1,,Sprint 6,
+Task,TK-134,US-045,Clone ECC repo as git submodule at ecc/,,Low,1,,Sprint 6,
+Task,TK-135,US-045,Copy relevant agents to ~/.claude/agents/,,Low,1,,Sprint 6,
+Task,TK-136,US-045,Copy relevant skills to ~/.claude/skills/,,Low,1,,Sprint 6,
+Task,TK-137,US-045,Copy rules (common + language-specific) to ~/.claude/rules/,,Low,1,,Sprint 6,
+Task,TK-138,US-045,Merge ECC hooks into .claude/settings.json,,Low,1,,Sprint 6,
+Task,TK-139,US-045,Run AgentShield security scan,,Low,1,,Sprint 6,
+Task,TK-140,US-046,Create agents/bug-triager.md,,Medium,1,,Sprint 6,
+Task,TK-141,US-046,Create agents/refactor-planner.md,,Medium,1,,Sprint 6,
+Task,TK-142,US-046,Create agents/code-reviewer.md,,Medium,1,,Sprint 6,
+Task,TK-143,US-046,Create agents/perf-analyzer.md,,Medium,1,,Sprint 6,
+Epic,EP-13,,Git Integration & Branch Strategy,"Branch naming convention, auto-linking, commit tracking, git hooks, merge detection",Highest,34,"git,integration",Sprint 7,
+Epic,EP-14,,Document Generation,"Export project as PDF/Markdown/HTML/DOCX with reasoning trees, diffs, git history",High,18,"export,docs",Sprint 8,
+Epic,EP-15,,Visual Flow Diagrams,"Architecture flow, data flow, ticket lifecycle, reasoning pipeline visualizations",High,16,"flow,visualization",Sprint 8,
+Story,US-047,EP-13,"As a developer, I want branches auto-linked to tickets by naming convention so that git history is visible on tickets",,Highest,8,"git,branches",Sprint 7,"Branches matching DC-XXX/* auto-link to ticket; Branch status shown in ticket Git tab; Branch card shows name, status, ahead/behind"
+Story,US-048,EP-13,"As a developer, I want to see commit history on a ticket's Git tab so that I can track what changed",,Highest,5,"git,commits",Sprint 7,"Commit list with hash, message, author, date, files; Expandable inline diffs per commit; Files added/modified/deleted shown"
+Story,US-049,EP-13,"As a developer, I want git hooks that report commits and merges to Decidr Code so that tracking is real-time",,Highest,5,"git,hooks",Sprint 7,"post-commit hook POSTs commit data to API; post-checkout detects new DC-* branches; post-merge reports merge events; install-git-hooks.sh symlinks into .git/hooks/"
+Story,US-050,EP-13,"As a developer, I want tickets to auto-move when branches are created or merged so that the board stays current",,High,3,"git,automation",Sprint 7,"New DC-* branch moves ticket to in_progress; Merge to main moves ticket to done; Configurable via .decidr/config.json"
+Story,US-051,EP-13,"As a developer, I want story-level sub-branches so that work within a ticket is organized",,High,3,"git,branches",Sprint 7,"DC-XXX/US-YYY/* branches link to ticket + tagged with story; Sub-branches tracked independently; Merge sub to ticket branch logged"
+Story,US-052,EP-13,"As a developer, I want branch status indicators on ticket cards so that I can see git state at a glance",,Medium,2,"git,frontend",Sprint 7,"Card shows branch icon + count; Stale branch warning (>7 days); Merged indicator"
+Story,US-053,EP-13,"As a developer, I want MCP tools for branch creation and git history so that editors can manage git workflow",,High,3,"git,mcp",Sprint 7,"create-branch tool; create-story-branch tool; get-git-history tool; link-branch tool"
+Story,US-054,EP-13,"As a developer, I want a git hook installer so that setting up tracking is one command",,Medium,2,"git,setup",Sprint 7,"install-hooks command/MCP tool; Symlinks post-commit, post-checkout, post-merge; Works on macOS, Linux, Windows (Git Bash)"
+Story,US-055,EP-13,"As a developer, I want relevance detection for unlinked commits so that nothing falls through cracks",,Medium,3,"git,detection",Sprint 7,"Commit message containing DC-XXX links to ticket; File overlap detection (70% confidence); Suggested links shown as 'possibly related' in UI"
+Story,US-056,EP-14,"As a project lead, I want to export the entire project as a document so that I have a complete record",,Highest,8,"export,document",Sprint 8,"Export includes: summary, board overview, per-ticket details (reasoning, diffs, comments, git history), statistics, appendix; Download as file"
+Story,US-057,EP-14,"As a developer, I want to choose export format (PDF, Markdown, HTML, DOCX) so that I can share in the right format",,High,3,"export,formats",Sprint 8,"4 format options in export modal; PDF via puppeteer; DOCX via docx library; MD and HTML built-in"
+Story,US-058,EP-14,"As a developer, I want the export to include reasoning trees, diffs, comments, and git history so that the document is comprehensive",,High,5,"export,content",Sprint 8,"Reasoning trees rendered as indented text; Diffs with syntax highlighting; Comment threads with author attribution; Git commit log per ticket"
+Story,US-059,EP-14,"As a developer, I want an export MCP tool so that I can generate documents from my editor",,Medium,2,"export,mcp",Sprint 8,"export-project tool; Input: format, scope (all/filtered/single ticket); Returns file path or content"
+Story,US-060,EP-15,"As a developer, I want an architecture flow diagram so that I can see how packages connect",,High,5,"flow,architecture",Sprint 8,"Interactive node graph showing: core, server, mcp, file-bridge, web, vscode-ext; Edges show dependency direction; Click node shows package details"
+Story,US-061,EP-15,"As a developer, I want a ticket lifecycle visualization so that I can see the state machine with hooks",,High,3,"flow,lifecycle",Sprint 8,"5 states connected by arrows; Hook annotations on each transition; Current ticket highlighted when viewing from ticket detail"
+Story,US-062,EP-15,"As a developer, I want a data flow diagram so that I can trace requests from UI to database",,Medium,3,"flow,dataflow",Sprint 8,"Flow: User → React → Zustand → API Client → REST Server → Service → Repository → PostgreSQL; Animated data flow on hover"
+Story,US-063,EP-15,"As a developer, I want a reasoning pipeline visualization so that I can see how tickets get processed",,Medium,3,"flow,reasoning",Sprint 8,"Flow: Ticket → Agent Router → Claude API → Parse Response → Save Reasoning → Update Diff → Notify"
+Story,US-064,EP-15,"As a developer, I want a mini flow in each ticket detail showing its journey so far",,Medium,2,"flow,ticket",Sprint 8,"Small horizontal flow in ticket header; Highlights current state; Shows which hooks have fired; Which agent processed it"
+Task,TK-144,US-047,Create git_branches table in Drizzle schema,Highest,1,Sprint 7,
+Task,TK-145,US-047,Create git_commits table in Drizzle schema,Highest,1,Sprint 7,
+Task,TK-146,US-047,Create git-branch-repo.ts — CRUD for git_branches,Highest,2,Sprint 7,
+Task,TK-147,US-047,Create git-commit-repo.ts — CRUD for git_commits,Highest,2,Sprint 7,
+Task,TK-148,US-047,"Create git-service.ts — branch detection, commit syncing, merge handling",Highest,2,Sprint 7,
+Task,TK-149,US-048,Create GitTab.tsx — container: branch list + commit log,Highest,2,Sprint 7,
+Task,TK-150,US-048,Create BranchCard.tsx — single branch with status and ahead/behind,High,1,Sprint 7,
+Task,TK-151,US-048,Create CommitList.tsx — list of commits with expandable diffs,Highest,1,Sprint 7,
+Task,TK-152,US-048,Create CommitEntry.tsx — single commit: hash/message/author/files,High,1,Sprint 7,
+Task,TK-153,US-049,Create hooks/git/post-commit.sh — parse branch and POST to API,Highest,1,Sprint 7,
+Task,TK-154,US-049,Create hooks/git/post-checkout.sh — detect new DC-* branches,Highest,1,Sprint 7,
+Task,TK-155,US-049,Create hooks/git/post-merge.sh — report merge events,Highest,1,Sprint 7,
+Task,TK-156,US-049,Create hooks/install-git-hooks.sh — symlink into .git/hooks/,High,1,Sprint 7,
+Task,TK-157,US-049,Create server routes: POST /api/git/commit /branch /merge,High,1,Sprint 7,
+Task,TK-158,US-050,Implement auto-move on branch creation in git-service.ts,High,1,Sprint 7,
+Task,TK-159,US-050,Implement auto-move on merge detection in git-service.ts,High,1,Sprint 7,
+Task,TK-160,US-050,Add git config to .decidr/config.json schema,Medium,1,Sprint 7,
+Task,TK-161,US-051,Implement story sub-branch parsing (DC-XXX/US-YYY/*) in git-service.ts,High,2,Sprint 7,
+Task,TK-162,US-051,Show story tags on sub-branch cards in GitTab,Medium,1,Sprint 7,
+Task,TK-163,US-052,Add git branch indicator to TicketCard.tsx,Medium,1,Sprint 7,
+Task,TK-164,US-052,Add stale branch warning badge,Medium,1,Sprint 7,
+Task,TK-165,US-053,Create MCP tools: create-branch and create-story-branch,High,1,Sprint 7,
+Task,TK-166,US-053,Create MCP tools: get-git-history and link-branch,High,1,Sprint 7,
+Task,TK-167,US-053,Create MCP tool: install-hooks,Medium,1,Sprint 7,
+Task,TK-168,US-054,Create install-git-hooks.sh with platform detection,Medium,1,Sprint 7,
+Task,TK-169,US-054,Add install-hooks command to CLI and MCP,Medium,1,Sprint 7,
+Task,TK-170,US-055,Implement commit message DC-XXX detection in git-service.ts,Medium,1,Sprint 7,
+Task,TK-171,US-055,Implement file overlap detection for suggested links,Medium,1,Sprint 7,
+Task,TK-172,US-055,"Create SuggestedLinks component — 'possibly related' UI",Medium,1,Sprint 7,
+Task,TK-173,US-056,Create doc-generator.ts service — query all data and build document structure,Highest,3,Sprint 8,
+Task,TK-174,US-056,Create markdown template renderer,Highest,2,Sprint 8,
+Task,TK-175,US-056,Create HTML template renderer (self-contained),High,2,Sprint 8,
+Task,TK-176,US-056,Create ExportModal.tsx — format picker + scope + download,High,1,Sprint 8,
+Task,TK-177,US-057,Integrate puppeteer for PDF generation,High,2,Sprint 8,
+Task,TK-178,US-057,Integrate docx library for DOCX generation,Medium,1,Sprint 8,
+Task,TK-179,US-058,Render reasoning trees as indented text in documents,High,2,Sprint 8,
+Task,TK-180,US-058,Render diffs with syntax highlighting in documents,High,1,Sprint 8,
+Task,TK-181,US-058,Include git commit log per ticket in documents,High,1,Sprint 8,
+Task,TK-182,US-058,"Include statistics section with charts/tables",Medium,1,Sprint 8,
+Task,TK-183,US-059,Create export-project MCP tool,Medium,1,Sprint 8,
+Task,TK-184,US-059,Create server route: GET /api/export?format=pdf|md|html|docx,Medium,1,Sprint 8,
+Task,TK-185,US-060,"Install react-flow library, configure in web package",High,1,Sprint 8,
+Task,TK-186,US-060,Create ArchitectureFlow.tsx — package dependency graph,High,2,Sprint 8,
+Task,TK-187,US-060,Create FlowNode.tsx and FlowEdge.tsx — custom styled nodes/edges,High,2,Sprint 8,
+Task,TK-188,US-061,Create TicketLifecycle.tsx — 5-state machine with hook annotations,High,2,Sprint 8,
+Task,TK-189,US-061,Highlight current state when viewing from ticket detail,Medium,1,Sprint 8,
+Task,TK-190,US-062,Create DataFlowDiagram.tsx — request lifecycle visualization,Medium,2,Sprint 8,
+Task,TK-191,US-062,Add animated data flow on hover,Medium,1,Sprint 8,
+Task,TK-192,US-063,Create ReasoningPipeline.tsx — ticket processing flow,Medium,2,Sprint 8,
+Task,TK-193,US-063,Show agent routing decision in pipeline,Medium,1,Sprint 8,
+Task,TK-194,US-064,"Create MiniFlow.tsx — horizontal flow for ticket header",Medium,1,Sprint 8,
+Task,TK-195,US-064,Show fired hooks and processing agent in mini flow,Medium,1,Sprint 8,
