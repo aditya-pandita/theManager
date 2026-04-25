@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Priority } from '../types';
 
-type ActiveView = 'board' | 'hooks' | 'stats';
+type ActiveView = 'board' | 'hooks' | 'stats' | 'flows';
 type DetailTab = 'diff' | 'reasoning' | 'comments' | 'history' | 'media';
 
 interface UiStore {

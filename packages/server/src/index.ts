@@ -10,6 +10,9 @@ import processRouter from './routes/process';
 import importRouter from './routes/import';
 import projectsRouter from './routes/projects';
 import userStoriesRouter from './routes/user-stories';
+import gitRouter from './routes/git';
+import ticketGitRouter from './routes/ticket-git';
+import exportRouter from './routes/export';
 
 const app = express();
 const PORT = parseInt(process.env.PORT ?? '3117', 10);
@@ -27,6 +30,9 @@ app.use('/api/process', processRouter);
 app.use('/api/import/csv', express.text({ type: '*/*', limit: '10mb' }), importRouter);
 app.use('/api/projects', projectsRouter);
 app.use('/api/tickets/:id/user-story', userStoriesRouter);
+app.use('/api/git', gitRouter);
+app.use('/api/tickets/:id/git', ticketGitRouter);
+app.use('/api/export', exportRouter);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));

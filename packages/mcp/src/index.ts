@@ -10,6 +10,10 @@ import { registerProcessTicket } from './tools/process-ticket';
 import { registerListTickets } from './tools/list-tickets';
 import { registerGetReasoning } from './tools/get-reasoning';
 import { registerListProjects } from './tools/list-projects';
+import { registerLinkBranch } from './tools/link-branch';
+import { registerGetGitHistory } from './tools/get-git-history';
+import { registerCreateBranch } from './tools/create-branch';
+import { registerExportProject } from './tools/export-project';
 import { registerBoardResource } from './resources/board';
 import { registerTicketResource } from './resources/ticket';
 import { registerStatsResource } from './resources/stats';
@@ -30,6 +34,10 @@ registerProcessTicket(server);
 registerListTickets(server);
 registerGetReasoning(server);
 registerListProjects(server);
+registerLinkBranch(server);
+registerGetGitHistory(server);
+registerCreateBranch(server);
+registerExportProject(server);
 
 // Resources
 registerBoardResource(server);

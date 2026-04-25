@@ -7,6 +7,7 @@ import { TicketDetail } from './components/ticket/TicketDetail';
 import { CreateModal } from './components/create/CreateModal';
 import { HooksPanel } from './components/hooks/HooksPanel';
 import { StatsPanel } from './components/stats/StatsPanel';
+import { FlowView } from './components/flow/FlowView';
 import { useTicketStore } from './stores/ticket-store';
 import { useUiStore } from './stores/ui-store';
 import { useHookStore } from './stores/hook-store';
@@ -65,6 +66,7 @@ export default function App() {
 
       {activeView === 'hooks' && <HooksPanel />}
       {activeView === 'stats' && <StatsPanel />}
+      {activeView === 'flows' && <FlowView />}
 
       {isCreateModalOpen && (
         <CreateModal onClose={() => setCreateModalOpen(false)} onCreate={handleCreate} />

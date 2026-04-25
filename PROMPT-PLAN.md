@@ -843,4 +843,40 @@ These queries are impossible with JSON files — this is why PostgreSQL matters.
 
 ---
 
+## Phase 10: Git Integration (Sprint 7)
+
+**Epic**: EP-13 Git Integration & Branch Strategy
+
+1. Add `git_branches` and `git_commits` tables to schema; generate migration.
+2. Create `git-branch-repo`, `git-commit-repo`, `git-service` (parse DC-XXX from branch/commit, reportBranch, reportCommit, reportMerge).
+3. Add REST routes: `POST /api/git/branch`, `POST /api/git/commit`, `POST /api/git/merge`, `GET /api/tickets/:id/git`, `POST /api/tickets/:id/git/branch`.
+4. Add Git tab to ticket detail: BranchCard, CommitList, CommitEntry, MergeStatus; link/create branch inputs.
+5. Add MCP tools: `link-branch`, `get-git-history`, `create-branch`.
+6. Add git hooks: `hooks/git/post-commit.sh`, `post-checkout.sh`, `post-merge.sh`, `install-git-hooks.sh`.
+
+**Branch naming**: `DC-XXX/feature-name`, `DC-XXX/US-YYY/story-name`.
+
+---
+
+## Phase 11: Document Generation (Sprint 8)
+
+**Epic**: EP-14 Document Generation
+
+1. Create `doc-generator.ts`: `generateMarkdown`, `generateHtml` (tickets, reasoning trees, diffs, git history, stats).
+2. Add `GET /api/export?format=markdown|html&projectId=PROJ-XXX`.
+3. Add ExportModal + Export button in Toolbar.
+4. Add MCP tool: `export-project`.
+
+---
+
+## Phase 12: Visual Flows (Sprint 8)
+
+**Epic**: EP-15 Visual Flow Diagrams
+
+1. Add Flows nav tab + FlowView component.
+2. Implement Architecture, Data Flow, Ticket Lifecycle, Reasoning Pipeline diagrams (SVG or React Flow).
+3. Tab switcher between flow types.
+
+---
+
 *Feed each phase to your editor. Verify. Proceed. The tool builds itself.*

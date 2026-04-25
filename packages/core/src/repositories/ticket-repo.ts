@@ -56,7 +56,7 @@ export const ticketRepo = {
   async findById(id: string): Promise<Ticket | null> {
     const result = await db.query.tickets.findFirst({
       where: eq(tickets.id, id),
-      with: { project: true, diff: true, reasoning: true, userStory: true, comments: true, changelog: true },
+      with: { project: true, diff: true, reasoning: true, userStory: true, gitBranches: true, gitCommits: true, comments: true, changelog: true },
     });
     return (result as unknown as Ticket) ?? null;
   },
@@ -76,7 +76,7 @@ export const ticketRepo = {
 
     const result = await db.query.tickets.findMany({
       where: conditions.length ? and(...conditions) : undefined,
-      with: { project: true, diff: true, reasoning: true, userStory: true, comments: true, changelog: true },
+      with: { project: true, diff: true, reasoning: true, userStory: true, gitBranches: true, gitCommits: true, comments: true, changelog: true },
       orderBy: (t, { desc }) => [desc(t.createdAt)],
     });
     return result as unknown as Ticket[];

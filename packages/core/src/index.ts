@@ -17,12 +17,16 @@ export { hookRepo } from './repositories/hook-repo';
 export { sessionRepo } from './repositories/session-repo';
 export { projectRepo } from './repositories/project-repo';
 export { userStoryRepo } from './repositories/user-story-repo';
+export { gitBranchRepo } from './repositories/git-branch-repo';
+export { gitCommitRepo } from './repositories/git-commit-repo';
 
 // Services
 export { ticketService } from './services/ticket-service';
 export { reasoningService } from './services/reasoning-service';
 export { statsService } from './services/stats-service';
 export { projectService } from './services/project-service';
+export { gitService } from './services/git-service';
+export { generateMarkdown, generateHtml } from './services/doc-generator';
 
 // Hooks
 export { fireHook } from './hooks/runner';

@@ -71,6 +71,8 @@ export interface Ticket {
   diff?: Diff | null;
   reasoning?: import('./reasoning').Reasoning | null;
   userStory?: UserStory | null;
+  gitBranches?: import('./git').GitBranch[];
+  gitCommits?: import('./git').GitCommit[];
   comments?: Comment[];
   changelog?: ChangelogEntry[];
 }

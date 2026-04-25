@@ -1,7 +1,7 @@
 import { Icons } from '../shared/Icons';
 import type { ReactElement } from 'react';
 
-type TabId = 'story' | 'diff' | 'reasoning' | 'comments' | 'history' | 'media';
+type TabId = 'story' | 'diff' | 'reasoning' | 'git' | 'comments' | 'history' | 'media';
 
 interface Tab {
   id: TabId;
@@ -13,13 +13,15 @@ interface TabBarProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   commentCount: number;
+  gitCount?: number;
 }
 
-export function TabBar({ activeTab, onTabChange, commentCount }: TabBarProps) {
+export function TabBar({ activeTab, onTabChange, commentCount, gitCount = 0 }: TabBarProps) {
   const tabs: Tab[] = [
     { id: 'story',     icon: <Icons.User />,    label: 'Story' },
     { id: 'diff',      icon: <Icons.Code />,    label: 'Diff' },
     { id: 'reasoning', icon: <Icons.Brain />,   label: 'Reasoning' },
+    { id: 'git',       icon: <Icons.Git />,     label: gitCount > 0 ? `Git (${gitCount})` : 'Git' },
     { id: 'comments',  icon: <Icons.Chat />,    label: `Comments (${commentCount})` },
     { id: 'history',   icon: <Icons.History />, label: 'History' },
     { id: 'media',     icon: <Icons.Image />,   label: 'Media' },

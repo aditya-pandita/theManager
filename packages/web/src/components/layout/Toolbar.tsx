@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Icons } from '../shared/Icons';
 import { PRIORITY } from '../../constants';
 import { api } from '../../api/client';
+import { ExportModal } from '../export/ExportModal';
 import type { Priority } from '../../types';
 
 interface ImportResult { imported: number; skipped: number; total: number; errors: string[] }
@@ -19,6 +20,7 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -83,6 +85,21 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
       {/* Hidden file input */}
       <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" style={{ display: 'none' }} onChange={handleFile} />
 
+      {/* Export button */}
+      <button
+        onClick={() => setExportOpen(true)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px',
+          border: '1px solid #1e2330', background: '#111318',
+          color: '#9CA3AF', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3B82F6')}
+        onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#1e2330')}
+        title="Export project as Markdown or HTML"
+      >
+        ↓ Export
+      </button>
+
       {/* Import button */}
       <button
         onClick={() => fileRef.current?.click()}
@@ -114,6 +131,8 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
       >
         <Icons.Plus /> New Ticket
       </button>
+
+      {exportOpen && <ExportModal onClose={() => setExportOpen(false)} />}
     </div>
   );
 }

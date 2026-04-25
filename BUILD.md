@@ -177,11 +177,15 @@ postgresql://decidr_code:decidr_code_dev@localhost:5432/decidr_code
 
 Already set in `.env` — no manual config needed.
 
-### Schema (7 tables)
+### Schema (11 tables)
 
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
-| `tickets` | Core work items | id (DC-XXXXX), title, status, priority, tags[] |
+| `projects` | Project boards | id, name, description, color, folder_path |
+| `tickets` | Core work items | id (DC-XXXXX), project_id, title, status, priority, tags[] |
+| `user_stories` | Structured story details | ticket_id, role, want, benefit, acceptance_criteria, files[] |
+| `git_branches` | Branches linked to tickets | ticket_id, branch_name, status, ahead_count, behind_count |
+| `git_commits` | Commits linked to tickets | ticket_id, hash, message, author_name, files_modified |
 | `diffs` | Code changes per ticket | file_path, before_code, after_code |
 | `reasoning` | Decision trees + logs | tree (JSONB), logs (JSONB), confidence |
 | `comments` | Discussion threads | author, text |
@@ -292,8 +296,13 @@ Once the server is running, Cursor can use these MCP tools:
 | `move-ticket` | Change ticket status (column) |
 | `add-comment` | Add a comment to a ticket |
 | `process-ticket` | Generate reasoning tree + diff via Claude |
-| `list-tickets` | List/filter tickets |
+| `list-tickets` | List/filter tickets (supports projectId) |
+| `list-projects` | List all projects with folder paths |
 | `get-reasoning` | Read the decision tree for a ticket |
+| `link-branch` | Link a git branch to a ticket |
+| `get-git-history` | Get branch + commit history for a ticket |
+| `create-branch` | Create a properly named branch (DC-XXX/name) |
+| `export-project` | Generate project document (Markdown/HTML) |
 
 And read these resources:
 
@@ -419,7 +428,63 @@ curl http://localhost:3117/api/stats
 
 # Hook event log (last 100)
 curl http://localhost:3117/api/hooks
+
+# Export project (Markdown or HTML)
+curl "http://localhost:3117/api/export?format=markdown" -o decidr-export.md
+curl "http://localhost:3117/api/export?format=html&projectId=PROJ-XXX" -o decidr-export.html
 ```
+
+### Git Integration
+
+```bash
+# Report branch (from git hook)
+curl -X POST http://localhost:3117/api/git/branch \
+  -H 'Content-Type: application/json' \
+  -d '{"branch":"DC-042/fix-auth-bug"}'
+
+# Report commit (from git hook)
+curl -X POST http://localhost:3117/api/git/commit \
+  -H 'Content-Type: application/json' \
+  -d '{"branch":"DC-042/fix-auth-bug","hash":"abc123","message":"DC-042: fix token comparison","author":"Dev","committedAt":"2025-03-07T12:00:00Z"}'
+
+# Report merge
+curl -X POST http://localhost:3117/api/git/merge \
+  -H 'Content-Type: application/json' \
+  -d '{"branch":"DC-042/fix-auth-bug","mergedBy":"Dev"}'
+
+# Get git data for a ticket
+curl http://localhost:3117/api/tickets/DC-042/git
+
+# Create/link branch for a ticket
+curl -X POST http://localhost:3117/api/tickets/DC-042/git/branch \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"fix-auth-bug"}'
+```
+
+**Branch naming**: `DC-XXX/feature-name` or `DC-XXX/US-YYY/story-name`. Install hooks: `bash hooks/install-git-hooks.sh`
+
+---
+
+## Document Export
+
+Export the entire project (or filtered by project) as Markdown or HTML:
+
+- **Toolbar**: Click **↓ Export** → choose format → download
+- **API**: `GET /api/export?format=markdown|html&projectId=PROJ-XXX`
+- **MCP**: `export-project` tool
+
+Includes: ticket details, reasoning trees, diffs, comments, git history, statistics.
+
+---
+
+## Visual Flows
+
+The **Flows** tab (nav) shows interactive diagrams:
+
+- **Architecture** — packages (core, server, mcp, web, file-bridge) and dependencies
+- **Data Flow** — User Action → Store → API → Service → Repository → PostgreSQL
+- **Ticket Lifecycle** — Backlog → Todo → In Progress → Review → Done
+- **Reasoning Pipeline** — Ticket → Agent → Claude → Tree + Diff
 
 ---
 
@@ -523,8 +588,9 @@ npm run db:studio    # Open Drizzle visual DB browser
 
 | File | What It Covers |
 |------|---------------|
+| `FEATURE-ADDENDUM.md` | Git, export, flows, branch strategy — read first for v4 features |
 | `PROMPT-PLAN.md` | Full build blueprint — every phase, file, and prompt |
-| `PROJECT-BREAKDOWN.md` | Epics, stories, tasks — 201 items with estimates |
+| `PROJECT-BREAKDOWN.md` | Epics, stories, tasks — 195+ items with estimates |
 | `CLAUDE.md` | Project context for Claude Code |
 | `.cursorrules` | Project context for Cursor |
 | `ecc/the-shortform-guide.md` | ECC setup and philosophy (after cloning) |

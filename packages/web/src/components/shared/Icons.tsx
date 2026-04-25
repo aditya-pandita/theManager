@@ -81,9 +81,26 @@ export const Icons = {
       <rect x="10" y="2" width="3" height="11" />
     </svg>
   ),
+  Flow: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M2 4h4v2H2z" />
+      <path d="M8 4h4v2H8z" />
+      <path d="M4 8h6v2H4z" />
+      <path d="M2 4l2 2" />
+      <path d="M6 6l2 2" />
+      <path d="M10 6l-2 2" />
+    </svg>
+  ),
   Zap: () => (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M8 1L3 8h4l-1 5 6-7H8l1-5z" />
+    </svg>
+  ),
+  Git: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M3 7h5c1.5 0 2.5-1 2.5-2.5S9.5 2 8 2H3" />
+      <path d="M3 12h2c1.5 0 2.5-1 2.5-2.5S6.5 7 5 7H3" />
+      <circle cx="10.5" cy="4.5" r="1.5" />
     </svg>
   ),
   User: () => (

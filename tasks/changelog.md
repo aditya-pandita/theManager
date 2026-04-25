@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-03-07 (FEATURE-ADDENDUM v4)
+
+- [feat] Git Integration: `git_branches`, `git_commits` tables; git-branch-repo, git-commit-repo, git-service; REST /api/git/*, /api/tickets/:id/git; GitTab, BranchCard, CommitList, CommitEntry, MergeStatus; MCP link-branch, get-git-history, create-branch; hooks/git/post-commit, post-checkout, post-merge, install-git-hooks.sh
+- [feat] Document Export: doc-generator (generateMarkdown, generateHtml); GET /api/export; ExportModal + Export button; MCP export-project
+- [feat] Visual Flows: FlowView with Architecture, Data Flow, Ticket Lifecycle, Reasoning Pipeline; Flows nav tab
+- [docs] BUILD.md: schema 11 tables, Git/Export/Flows sections, MCP tools list; PROMPT-PLAN Phase 10–12
+
 ## 2026-03-07
 - [feat] `packages/core/src/db/schema.ts` — added `projects` table (id, name, description, color) and `user_stories` table (role, want, benefit, acceptanceCriteria, files[]); added `projectId` FK to `tickets`
 - [feat] `packages/core/src/types/ticket.ts` — added `Project`, `UserStory`, `NewProject` interfaces; added `projectId` + `userStory` to `Ticket`; `NewTicket` now accepts `projectId`
