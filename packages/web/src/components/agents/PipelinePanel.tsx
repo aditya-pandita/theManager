@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { usePipelineStore } from '../../stores/pipeline-store';
 import { AgentCard } from './AgentCard';
+import { ApplyPanel } from './ApplyPanel';
 import { PipelineControls } from '../controls/PipelineControls';
 
 const CHAIN_LABELS: Record<string, string> = {
@@ -50,6 +51,11 @@ export function PipelinePanel({ ticketId }: { ticketId: string }) {
           <AgentCard key={run.id} run={run} />
         ))}
       </div>
+
+      <ApplyPanel
+        ticketId={ticketId}
+        hasCoderRun={agentRuns.some((r) => r.agent === 'coder' && r.status === 'completed')}
+      />
     </div>
   );
 }

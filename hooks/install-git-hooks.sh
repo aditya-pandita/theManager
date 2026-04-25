@@ -6,13 +6,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GIT_DIR="$(git rev-parse --git-dir 2>/dev/null)"
 [ -z "$GIT_DIR" ] && { echo "Not a git repo."; exit 1; }
 
-HOOKS_DIR="$GIT_DIR/hooks"
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-REL="$(realpath --relative-to="$REPO_ROOT" "$SCRIPT_DIR" 2>/dev/null || python -c "import os; print(os.path.relpath('$SCRIPT_DIR','$REPO_ROOT'))")"
+# Resolve $GIT_DIR to absolute (it may be relative like ".git" inside repo root)
+HOOKS_DIR="$(cd "$GIT_DIR" && pwd)/hooks"
+mkdir -p "$HOOKS_DIR"
 
-ln -sf "$REL/git/post-commit.sh" "$HOOKS_DIR/post-commit"
-ln -sf "$REL/git/post-checkout.sh" "$HOOKS_DIR/post-checkout"
-ln -sf "$REL/git/post-merge.sh" "$HOOKS_DIR/post-merge"
+# Use absolute paths for the symlinks — portable across macOS, Linux, and worktrees.
+# Avoids the GNU-only `realpath --relative-to` and the python2 dependency.
+ln -sf "$SCRIPT_DIR/git/post-commit.sh"  "$HOOKS_DIR/post-commit"
+ln -sf "$SCRIPT_DIR/git/post-checkout.sh" "$HOOKS_DIR/post-checkout"
+ln -sf "$SCRIPT_DIR/git/post-merge.sh"   "$HOOKS_DIR/post-merge"
 
 chmod +x "$SCRIPT_DIR/git/post-commit.sh" "$SCRIPT_DIR/git/post-checkout.sh" "$SCRIPT_DIR/git/post-merge.sh"
-echo "Git hooks installed: post-commit, post-checkout, post-merge"
+echo "Git hooks installed in $HOOKS_DIR:"
+ls -la "$HOOKS_DIR" | grep -E "post-commit|post-checkout|post-merge"

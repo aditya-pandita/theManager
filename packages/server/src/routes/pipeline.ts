@@ -53,6 +53,25 @@ router.post('/reject/:ticketId', async (req, res) => {
   }
 });
 
+router.post('/reset/:ticketId', async (req, res) => {
+  try {
+    const result = await pipelineService.reset(req.params.ticketId);
+    sendJSON(res, { reset: true, ...result });
+  } catch (err: unknown) {
+    sendError(res, (err as Error).message);
+  }
+});
+
+router.post('/apply/:ticketId', async (req, res) => {
+  try {
+    const { dryRun } = (req.body ?? {}) as { dryRun?: boolean };
+    const result = await pipelineService.applyCoderOutput(req.params.ticketId, { dryRun });
+    sendJSON(res, result);
+  } catch (err: unknown) {
+    sendError(res, (err as Error).message, 400);
+  }
+});
+
 router.post('/skip/:ticketId', async (req, res) => {
   try {
     await pipelineService.skip(req.params.ticketId);

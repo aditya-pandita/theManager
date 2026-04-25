@@ -78,7 +78,7 @@ export abstract class BaseAgent {
   abstract buildPrompt(input: AgentInput): string;
   abstract parseResponse(raw: string, ticketId: string): AgentOutput;
 
-  async run(input: AgentInput): Promise<AgentOutput> {
+  async run(input: AgentInput, signal?: AbortSignal): Promise<AgentOutput> {
     // Re-read .env on each call — same pattern as process.ts
     dotenv.config({ path: path.resolve(__dirname, '../../../../.env'), override: true });
 
@@ -107,7 +107,18 @@ export abstract class BaseAgent {
 
     const startTime = Date.now();
     const userPrompt = this.buildPrompt(input);
-    const result = await model.generateContent(userPrompt);
+
+    // If the caller already aborted before we hit the network, surface that immediately.
+    if (signal?.aborted) {
+      const e: any = new Error('Agent aborted');
+      e.name = 'AbortError';
+      throw e;
+    }
+
+    // Pass the abort signal through to the SDK's underlying fetch so pause/skip
+    // can interrupt the in-flight Gemini/Gemma call instead of waiting for it
+    // to return naturally.
+    const result = await model.generateContent(userPrompt, signal ? ({ signal } as any) : undefined);
     const response = result.response;
     const usage = response.usageMetadata;
 

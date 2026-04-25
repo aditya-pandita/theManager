@@ -1,22 +1,56 @@
 # Decidr Code
 
-**AI-assisted change tracking for developers — every decision, made visible.**
+**A 6-agent AI pipeline that doesn't just write code — it shows its work.**
 
-Decidr Code is a desktop application that combines a Jira-style kanban board with AI-powered decision trees, git integration, and editor-native MCP support. When Claude processes a ticket, it generates a full reasoning tree showing what was considered, what was chosen, and why — creating an auditable trail of every engineering decision.
+Decidr Code combines a Jira-style kanban board with a multi-agent AI pipeline running on **Gemma 4** (open-weight, Apache 2.0). Every ticket flows through specialist agents — Planner, Architect, Coder, Tester, Reviewer, Docs — that each emit a slice of a structured decision tree. You see *what* was built and *why*, plus you can apply the AI's code to a real git branch with one click.
 
 ---
 
 ## What It Does
 
 - **Kanban board** — Manage work items across Backlog → Todo → In Progress → Review → Done
-- **AI reasoning trees** — Claude analyzes tickets and produces structured decision trees with confidence scores
-- **Git integration** — Branches and commits auto-link to tickets via naming convention (`DC-XXXXX/feature-name`)
+- **Multi-agent pipeline** — Each ticket runs through 6 specialist Gemma 4 agents that produce structured artifacts (plans, designs, code, tests, reviews, docs)
+- **Decision trees** — Every pipeline run consolidates the agents' reasoning into a typed tree (`problem`, `investigation`, `discovery`, `root_cause`, `decision`, `chosen`, `rejected`, `ruled_out`) — visible on the Reasoning tab
+- **One-click Apply** — Click "Apply Coder Output" and the agent's files land on a `DC-XXX/<slug>` git branch with a real commit. Sandbox by default, project workspace if linked.
+- **Git integration** — Branches and commits auto-link to tickets via the `DC-XXXXX/feature-name` convention
+- **Pipeline state guards** — Server-side guard rejects accidental re-fires; UI gates the Run button while running; `/api/pipeline/reset/:id` recovers stuck states
 - **MCP-first** — Works natively inside Cursor, Claude Code, Windsurf, and any MCP-compatible editor
 - **File bridge** — Drop a JSON file into `.decidr/inbox/` to create a ticket from any tool or script
-- **Document export** — Export an entire project as Markdown or HTML (tickets, reasoning, diffs, git history)
-- **Visual flows** — Architecture, data flow, ticket lifecycle, and reasoning pipeline diagrams
-- **Hook system** — Event-driven bash automation (TicketCreated, TicketMoved, PostSave, SessionStart)
-- **User stories** — Structured "As a [role], I want [action], so that [benefit]" with acceptance criteria
+- **Hook system** — Event-driven bash automation (TicketCreated, TicketMoved, PostSave, SessionStart, post-commit, post-checkout, post-merge)
+- **Local-first** — Postgres on your machine, no cloud dependency, your code never leaves your laptop
+
+---
+
+## High-level Architecture
+
+```mermaid
+flowchart TB
+    User[👤 User] -->|Creates ticket| Web[React UI :5173]
+    Web -->|HTTP| Server[Express API :3117]
+
+    Server -->|run pipeline| Orchestrator
+    subgraph Pipeline ["6-Agent Pipeline (Gemma 4 26B MoE)"]
+      direction LR
+      Orchestrator[Orchestrator] --> Planner[🧭 Planner]
+      Planner --> Architect[🏛️ Architect]
+      Architect --> Coder[👨‍💻 Coder]
+      Coder --> Tester[🧪 Tester]
+      Tester --> Reviewer[🔍 Reviewer]
+      Reviewer --> Docs[📝 Docs]
+    end
+    Pipeline -->|context flow| ContextStore[(agent_context)]
+    Pipeline -->|writes outputs| AgentRuns[(agent_runs)]
+    Pipeline -->|consolidated tree| Reasoning[(reasoning)]
+
+    Web -->|Apply| Server
+    Server -->|file-applier| Workspace[/Workspace<br/>project folderPath<br/>or sandbox/]
+    Workspace -->|git branch + commit| Git[(.git)]
+    Git -.post-commit hook.-> Server
+
+    Server --> Postgres[(PostgreSQL :5434)]
+    AgentRuns -.-> Postgres
+    Reasoning -.-> Postgres
+```
 
 ---
 
@@ -96,6 +130,45 @@ Decidr Code's 7-agent pipeline (Planner → Architect → Coder → Tester → R
 - The decision-tree audit trail and the model that produced it are equally portable.
 
 The MoE variant gives strong reasoning quality with only 4B active parameters per token, which keeps latency manageable when running 7 sequential agents per ticket.
+
+### End-to-end workflow
+
+```
+1. User files a ticket on the kanban board
+   ↓
+2. Click "▶ Run Pipeline" on the Pipeline tab
+   ↓
+3. Gemma 4 agents run in sequence (~5–7 minutes)
+     Planner   ──▶ tasks + acceptance criteria
+     Architect ──▶ design note, file structure, patterns
+     Coder     ──▶ full file contents + commit message
+     Tester    ──▶ test files + coverage targets
+     Reviewer  ──▶ score + per-file issues
+     Docs      ──▶ updated README, changelog
+   ↓
+4. Reasoning tab shows a 6-branch consolidated decision tree
+   ↓
+5. Click "✓ Apply for real" on the Apply Coder Output panel
+     • Files written to /tmp/decidr-output/<ticketId>/  (sandbox)
+       OR to project.folderPath if a project is linked
+     • Sandbox auto-init as a git repo on first apply
+     • DC-<id>/<slug> branch checked out
+     • Files committed with the Coder's commit message
+   ↓
+6. Branch + commit registered in Decidr's git tables → visible on the Git tab
+   ↓
+7. Open the workspace path, inspect the diff, run the code
+```
+
+### Apply safety guarantees
+
+The file-applier in [`packages/core/src/workspace/file-applier.ts`](packages/core/src/workspace/file-applier.ts) refuses to:
+
+- Write to absolute paths or anything that escapes the workspace via `..`
+- Touch denylisted segments: `.git`, `.env*`, `node_modules`, lockfiles, `.ssh`, `.aws`, `.gnupg`
+- Overwrite touchstone files when they already exist: `package.json`, `tsconfig.json`, `.gitignore`
+
+A **dry-run mode** previews what would be written without touching disk. The UI exposes both buttons (`👁 Preview` and `✓ Apply for real`) on the Pipeline tab.
 
 ### Git Integration
 

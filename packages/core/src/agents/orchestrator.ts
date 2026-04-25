@@ -120,6 +120,12 @@ const DEFAULT_CONFIG: PipelineConfig = {
 
 const sseListeners = new Map<string, SSECallback[]>();
 
+// Tracks the AbortController for whichever agent is currently running on a ticket,
+// so pause/skip can interrupt the in-flight Gemini/Gemma call instead of waiting
+// for it to return naturally.
+type ActiveAgent = { agent: AgentName; runId: number; controller: AbortController; reason?: 'pause' | 'skip' };
+const activeAgents = new Map<string, ActiveAgent>();
+
 export const orchestrator = {
   subscribe(ticketId: string, cb: SSECallback): void {
     const list = sseListeners.get(ticketId) ?? [];
@@ -134,6 +140,20 @@ export const orchestrator = {
 
   emit(ticketId: string, event: object): void {
     (sseListeners.get(ticketId) ?? []).forEach((cb) => { try { cb(event); } catch {} });
+  },
+
+  /**
+   * Abort whichever agent is currently running on this ticket. Used by
+   * pipelineService.pause and pipelineService.skip so the in-flight Gemma call
+   * is cancelled immediately, not after it returns naturally.
+   * Returns the agent name that was aborted, or null if none was running.
+   */
+  abortActiveAgent(ticketId: string, reason: 'pause' | 'skip'): { agent: AgentName; runId: number } | null {
+    const active = activeAgents.get(ticketId);
+    if (!active) return null;
+    active.reason = reason;
+    try { active.controller.abort(); } catch {}
+    return { agent: active.agent, runId: active.runId };
   },
 
   async runPipeline(ticket: Ticket, ticketType: TicketType, config: PipelineConfig = DEFAULT_CONFIG): Promise<void> {
@@ -169,6 +189,10 @@ export const orchestrator = {
       // Create agent run record
       const run = await agentRunRepo.create({ ticketId: ticket.id, agent: agentName, status: 'running' });
 
+      // Per-agent AbortController so pause/skip can interrupt the in-flight Gemma call
+      const controller = new AbortController();
+      activeAgents.set(ticket.id, { agent: agentName, runId: run.id, controller });
+
       this.emit(ticket.id, { type: 'agent:started', ticketId: ticket.id, agent: agentName });
       activityService.log({ ticketId: ticket.id, actorType: 'agent', actorName: agentName, actionType: 'agent_started', payload: { runId: run.id } }).catch(() => {});
 
@@ -177,7 +201,10 @@ export const orchestrator = {
         const agent = agentRegistry.get(agentName);
         const agentConfig = agentRegistry.getConfig(agentName);
 
-        const output = await failureHandler.run(agent, { ticket: current, contextStore: ctx }, agentConfig);
+        const output = await failureHandler.run(agent, { ticket: current, contextStore: ctx }, agentConfig, controller.signal);
+
+        // Successful completion — clear the active controller before recording.
+        activeAgents.delete(ticket.id);
 
         await agentRunRepo.complete(run.id, output.data as object, output.tokensInput, output.tokensOutput, output.durationMs);
         await contextStore.set(ticket.id, agentName === 'coder' ? 'code_files' : agentName, output.data, agentName);
@@ -205,7 +232,33 @@ export const orchestrator = {
         }
 
       } catch (err) {
-        const message = (err as Error).message;
+        // Was this an abort triggered by pause/skip from outside?
+        const cancellationReason = activeAgents.get(ticket.id)?.reason;
+        activeAgents.delete(ticket.id);
+
+        const message = (err as Error).message ?? String(err);
+        const aborted = controller.signal.aborted ||
+                        (err as Error).name === 'AbortError' ||
+                        message.toLowerCase().includes('abort');
+
+        if (aborted && cancellationReason === 'skip') {
+          // Skip: mark this run as skipped and continue to the next agent.
+          await agentRunRepo.skip(run.id);
+          activityService.log({ ticketId: ticket.id, actorType: 'user', actionType: 'agent_skipped', payload: { agent: agentName, runId: run.id } }).catch(() => {});
+          this.emit(ticket.id, { type: 'agent:skipped', ticketId: ticket.id, agent: agentName });
+          continue;
+        }
+
+        if (aborted && cancellationReason === 'pause') {
+          // Pause: mark this run as failed (cancelled) and exit. The user will resume later.
+          await agentRunRepo.fail(run.id, 'Cancelled by user (pause)', 0);
+          await ticketRepo.updatePipelineState(ticket.id, 'paused', agentName);
+          activityService.log({ ticketId: ticket.id, actorType: 'user', actionType: 'pipeline_paused', payload: { atAgent: agentName, runId: run.id } }).catch(() => {});
+          this.emit(ticket.id, { type: 'pipeline:paused', ticketId: ticket.id, atAgent: agentName });
+          return;
+        }
+
+        // Real failure (model error, parse error, etc.) — block and bail.
         await agentRunRepo.fail(run.id, message, agentRegistry.getConfig(agentName).maxRetries);
         await ticketRepo.updatePipelineState(ticket.id, 'blocked', agentName);
         activityService.log({ ticketId: ticket.id, actorType: 'agent', actorName: agentName, actionType: 'agent_failed', payload: { error: message } }).catch(() => {});
