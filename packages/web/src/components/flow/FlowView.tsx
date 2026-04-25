@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useThemeStore } from '../../stores/theme-store';
 
 type FlowType = 'architecture' | 'dataflow' | 'lifecycle' | 'reasoning';
 
@@ -64,8 +65,13 @@ const EDGES: Record<FlowType, [string, string][]> = {
 
 export function FlowView() {
   const [flow, setFlow] = useState<FlowType>('architecture');
+  const theme = useThemeStore((s) => s.theme);
   const nodes = NODES[flow];
   const edges = EDGES[flow];
+
+  // SVG attributes don't reliably consume CSS custom properties; resolve here.
+  const nodeFill   = theme === 'light' ? '#ffffff' : '#1e2330';
+  const nodeText   = theme === 'light' ? '#0f172a' : '#e2e8f0';
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -77,9 +83,9 @@ export function FlowView() {
             style={{
               padding: '8px 16px',
               borderRadius: '8px',
-              border: `1px solid ${flow === f ? '#3B82F6' : '#1e2330'}`,
+              border: `1px solid ${flow === f ? '#3B82F6' : 'var(--border)'}`,
               background: flow === f ? '#172554' : 'transparent',
-              color: flow === f ? '#93c5fd' : '#6B7280',
+              color: flow === f ? '#93c5fd' : 'var(--text-muted)',
               cursor: 'pointer',
               fontSize: '12px',
               fontWeight: 600,
@@ -91,7 +97,7 @@ export function FlowView() {
         ))}
       </div>
 
-      <div style={{ background: '#0c0e14', border: '1px solid #1e2330', borderRadius: '12px', padding: '24px', overflow: 'auto' }}>
+      <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px', overflow: 'auto' }}>
         <svg width="640" height="520" style={{ display: 'block', margin: '0 auto' }}>
           {edges.map(([from, to], i) => {
             const n1 = nodes.find((n) => n.id === from)!;
@@ -108,8 +114,8 @@ export function FlowView() {
           })}
           {nodes.map((n) => (
             <g key={n.id}>
-              <rect x={n.x} y={n.y} width="120" height="40" rx="8" fill="#1e2330" stroke="#3B82F6" strokeWidth="1.5" />
-              <text x={n.x + 60} y={n.y + 25} textAnchor="middle" fill="#e2e8f0" fontSize="12" fontWeight="600">
+              <rect x={n.x} y={n.y} width="120" height="40" rx="8" fill={nodeFill} stroke="#3B82F6" strokeWidth="1.5" />
+              <text x={n.x + 60} y={n.y + 25} textAnchor="middle" fill={nodeText} fontSize="12" fontWeight="600">
                 {n.label}
               </text>
             </g>

@@ -11,8 +11,8 @@ export function StatsPanel() {
     api.get<StatsData>('/api/stats').then((s) => { setStats(s); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280' }}>Loading stats...</div>;
-  if (!stats) return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280' }}>Failed to load stats.</div>;
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading stats...</div>;
+  if (!stats) return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Failed to load stats.</div>;
 
   const inProgress = stats.byStatus?.in_progress ?? 0;
   const done = stats.byStatus?.done ?? 0;
@@ -21,9 +21,9 @@ export function StatsPanel() {
 
   return (
     <div style={{ padding: '24px 28px' }}>
-      <h2 style={{ color: '#e2e8f0', fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>Project Stats</h2>
+      <h2 style={{ color: 'var(--text)', fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>Project Stats</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-        <StatCard label="TOTAL TICKETS" value={stats.total} color="#e2e8f0" />
+        <StatCard label="TOTAL TICKETS" value={stats.total} />
         <StatCard label="COMPLETED" value={done} color="#10B981" />
         <StatCard label="IN PROGRESS" value={inProgress} color="#3B82F6" />
         <StatCard label="WITH REASONING" value={stats.withReasoning} color="#A855F7" />

@@ -19,9 +19,9 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
           onClick={() => toggle(t)}
           style={{
             padding: '5px 12px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', transition: 'all 0.15s',
-            border: `1px solid ${selected.includes(t) ? '#3B82F6' : '#1e2330'}`,
+            border: `1px solid ${selected.includes(t) ? '#3B82F6' : 'var(--border)'}`,
             background: selected.includes(t) ? '#172554' : 'transparent',
-            color: selected.includes(t) ? '#60a5fa' : '#6B7280',
+            color: selected.includes(t) ? '#60a5fa' : 'var(--text-muted)',
           }}
         >
           {t}

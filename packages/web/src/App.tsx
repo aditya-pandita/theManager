@@ -12,6 +12,7 @@ import { useTicketStore } from './stores/ticket-store';
 import { useUiStore } from './stores/ui-store';
 import { useHookStore } from './stores/hook-store';
 import { useProjectStore } from './stores/project-store';
+import { useThemeStore } from './stores/theme-store';
 import type { Ticket, Status, Priority } from './types';
 
 export default function App() {
@@ -19,6 +20,8 @@ export default function App() {
   const { activeView, searchQuery, filterPriority, selectedTicketId, isCreateModalOpen, setActiveView, setSearchQuery, setFilterPriority, setSelectedTicketId, setCreateModalOpen } = useUiStore();
   const { hooks } = useHookStore();
   const { activeProjectId, fetchProjects } = useProjectStore();
+  // Read theme so the root container re-renders with the right background when toggled
+  const theme = useThemeStore((s) => s.theme);
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
@@ -53,7 +56,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0c10', color: '#e2e8f0', fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif" }}>
+    <div data-theme={theme} style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif" }}>
       <Header tickets={tickets} onProjectChange={(id) => fetchTickets(id)} />
       <NavTabs activeView={activeView} onViewChange={setActiveView} hookCount={hooks.length} />
 

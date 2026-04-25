@@ -41,9 +41,9 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
   }
 
   return (
-    <div style={{ padding: '14px 28px', display: 'flex', gap: '10px', alignItems: 'center', borderBottom: '1px solid #1e233050', flexWrap: 'wrap' }}>
+    <div style={{ padding: '14px 28px', display: 'flex', gap: '10px', alignItems: 'center', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
       <input
-        style={{ background: '#111318', border: '1px solid #1e2330', borderRadius: '8px', padding: '8px 14px', color: '#e2e8f0', fontSize: '12px', outline: 'none', width: '240px' }}
+        style={{ background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 14px', color: 'var(--text)', fontSize: '12px', outline: 'none', width: '240px' }}
         placeholder="Search tickets..."
         value={search}
         onChange={(e) => onSearch(e.target.value)}
@@ -55,9 +55,9 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
             onClick={() => onFilter(p)}
             style={{
               padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '10px', fontWeight: 600, transition: 'all 0.15s',
-              border: `1px solid ${filterPriority === p ? '#3B82F6' : '#1e2330'}`,
+              border: `1px solid ${filterPriority === p ? '#3B82F6' : 'var(--border)'}`,
               background: filterPriority === p ? '#172554' : 'transparent',
-              color: filterPriority === p ? '#60a5fa' : '#6B7280',
+              color: filterPriority === p ? '#60a5fa' : 'var(--text-muted)',
             }}
           >
             {p ? PRIORITY[p].label : 'ALL'}
@@ -90,11 +90,11 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
         onClick={() => setExportOpen(true)}
         style={{
           display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px',
-          border: '1px solid #1e2330', background: '#111318',
-          color: '#9CA3AF', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
+          border: '1px solid var(--border)', background: 'var(--button-bg)',
+          color: 'var(--text-soft)', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
         }}
         onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3B82F6')}
-        onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#1e2330')}
+        onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
         title="Export project as Markdown or HTML"
       >
         ↓ Export
@@ -106,12 +106,12 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
         disabled={importing}
         style={{
           display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px',
-          border: '1px solid #1e2330', background: importing ? '#1a1f2e' : '#111318',
-          color: importing ? '#4B5563' : '#9CA3AF', cursor: importing ? 'not-allowed' : 'pointer',
+          border: '1px solid var(--border)', background: importing ? 'var(--button-disabled)' : 'var(--button-bg)',
+          color: importing ? 'var(--text-faint)' : 'var(--text-soft)', cursor: importing ? 'not-allowed' : 'pointer',
           fontSize: '12px', fontWeight: 600, transition: 'all 0.2s',
         }}
         onMouseEnter={(e) => { if (!importing) e.currentTarget.style.borderColor = '#3B82F6'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1e2330'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
         title="Import tickets from a CSV file (Jira export format supported)"
       >
         {importing ? '⟳ Importing…' : '↑ Import CSV'}

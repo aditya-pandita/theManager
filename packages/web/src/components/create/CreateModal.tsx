@@ -11,8 +11,8 @@ interface CreateModalProps {
   onCreate: (input: { title: string; description: string; priority: Priority; tags: string[]; diff?: { filePath: string; beforeCode: string; afterCode: string } }) => Promise<void>;
 }
 
-const labelStyle: React.CSSProperties = { color: '#94a3b8', fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', marginBottom: '6px', display: 'block' };
-const inputStyle: React.CSSProperties = { width: '100%', background: '#0c0e14', border: '1px solid #1e2330', borderRadius: '8px', padding: '10px 14px', color: '#e2e8f0', fontSize: '13px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+const labelStyle: React.CSSProperties = { color: 'var(--section-label)', fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', marginBottom: '6px', display: 'block' };
+const inputStyle: React.CSSProperties = { width: '100%', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 14px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
 
 export function CreateModal({ onClose, onCreate }: CreateModalProps) {
   const [title, setTitle] = useState('');
@@ -42,11 +42,11 @@ export function CreateModal({ onClose, onCreate }: CreateModalProps) {
 
   return (
     <Modal onClose={onClose} width={540}>
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid #1e2330', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: '#e2e8f0', fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ color: 'var(--text)', fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ color: '#3B82F6' }}><Icons.Plus /></span> New Ticket
         </span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', padding: '4px' }}><Icons.X /></button>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}><Icons.X /></button>
       </div>
       <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div>
@@ -67,12 +67,12 @@ export function CreateModal({ onClose, onCreate }: CreateModalProps) {
         </div>
         <CodeAttach filePath={filePath} code={code} onFilePathChange={setFilePath} onCodeChange={setCode} />
       </div>
-      <div style={{ padding: '16px 24px', borderTop: '1px solid #1e2330', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-        <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #1e2330', background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+        <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
         <button
           onClick={handleCreate}
           disabled={!title.trim() || submitting}
-          style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: title.trim() ? 'pointer' : 'default', fontSize: '13px', fontWeight: 600, background: title.trim() ? 'linear-gradient(135deg, #3B82F6, #2563EB)' : '#1e2330', color: title.trim() ? '#fff' : '#4B5563', transition: 'all 0.2s' }}
+          style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: title.trim() ? 'pointer' : 'default', fontSize: '13px', fontWeight: 600, background: title.trim() ? 'linear-gradient(135deg, #3B82F6, #2563EB)' : 'var(--button-disabled)', color: title.trim() ? '#fff' : 'var(--text-faint)', transition: 'all 0.2s' }}
         >
           {submitting ? 'Creating...' : 'Create Ticket'}
         </button>

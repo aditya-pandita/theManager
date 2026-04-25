@@ -11,24 +11,124 @@
   to { opacity: 1; transform: none; }
 }
 
+/* ---------- Theme variables ---------- */
+
+:root,
+[data-theme="dark"] {
+  --bg:             #0a0c10;
+  --bg-elevated:    #13161d;
+  --bg-overlay:     rgba(0, 0, 0, 0.7);
+  --border:         #1e2330;
+  --border-soft:    #1e2533;
+  --surface:        #0d1117;
+  --card-bg:        #111318;
+  --card-bg-hover:  #161a24;
+  --input-bg:       #111318;
+  --button-bg:      #111318;
+  --button-disabled:#1a1f2e;
+  --text:           #e2e8f0;
+  --text-muted:     #6B7280;
+  --text-soft:      #9CA3AF;
+  --text-dim:       #64748b;
+  --text-faint:     #4B5563;
+  --section-label:  #94a3b8;
+  --scrollbar:      #1e2330;
+  /* Tag chips and meta indicators */
+  --tag-bg:         #1a1f2e;
+  --tag-border:     #252b3b;
+  --tag-text:       #94a3b8;
+  --meta-icon:      currentColor; /* keeps dark-mode why/diff/comments vivid */
+}
+
+[data-theme="light"] {
+  --bg:             #f3f5f8;
+  --bg-elevated:    #ffffff;
+  --bg-overlay:     rgba(15, 23, 42, 0.4);
+  --border:         #e2e8f0;
+  --border-soft:    #d1d9e0;
+  --surface:        #ffffff;
+  --card-bg:        #ffffff;
+  --card-bg-hover:  #f1f5f9;
+  --input-bg:       #ffffff;
+  --button-bg:      #ffffff;
+  --button-disabled:#e2e8f0;
+  --text:           #0f172a;
+  --text-muted:     #475569;
+  --text-soft:      #64748b;
+  --text-dim:       #94a3b8;
+  --text-faint:     #94a3b8;
+  --section-label:  #475569;
+  --scrollbar:      #cbd5e1;
+  /* Monochromatic palette for chips and decorative meta in light mode */
+  --tag-bg:         #f1f5f9;
+  --tag-border:     #e2e8f0;
+  --tag-text:       #475569;
+  --meta-icon:      #64748b; /* gray out the why/diff/comments indicators */
+}
+
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: #1e2330 transparent;
+  scrollbar-color: var(--scrollbar) transparent;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1e2330; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
 
 body {
   margin: 0;
-  background: #0a0c10;
-  color: #e2e8f0;
+  background: var(--bg);
+  color: var(--text);
   font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 input, textarea, button {
   font-family: inherit;
 }
+
+/* ---------- Light-theme overrides for inline-styled components ----------
+ * The codebase uses inline styles with hardcoded hex throughout. Rather than
+ * touching every component, we override the dominant dark palette at the
+ * body level. Inline styles win specificity unless we use !important here. */
+
+body[data-theme="light"] [style*="#0a0c10"] { background: var(--bg) !important; }
+body[data-theme="light"] [style*="#13161d"] { background: var(--bg-elevated) !important; }
+body[data-theme="light"] [style*="#0d1117"] { background: var(--surface) !important; }
+body[data-theme="light"] [style*="#1e2533"] { background: var(--bg-elevated) !important; }
+body[data-theme="light"] [style*="#1e293b"] { background: var(--bg-elevated) !important; }
+body[data-theme="light"] [style*="#0f172a"] { background: var(--bg-elevated) !important; }
+
+/* Borders */
+body[data-theme="light"] [style*="1px solid #1e2330"] { border-color: var(--border) !important; }
+body[data-theme="light"] [style*="1px solid #1e2533"] { border-color: var(--border) !important; }
+body[data-theme="light"] [style*="1px solid #334155"] { border-color: var(--border-soft) !important; }
+body[data-theme="light"] [style*="1px solid #1e293b"] { border-color: var(--border) !important; }
+
+/* Text colors — primary and muted */
+body[data-theme="light"] [style*="color: #e2e8f0"],
+body[data-theme="light"] [style*="color:#e2e8f0"] { color: var(--text) !important; }
+body[data-theme="light"] [style*="color: #94a3b8"],
+body[data-theme="light"] [style*="color:#94a3b8"] { color: var(--text-muted) !important; }
+body[data-theme="light"] [style*="color: #6B7280"],
+body[data-theme="light"] [style*="color:#6B7280"] { color: var(--text-muted) !important; }
+body[data-theme="light"] [style*="color: #64748b"],
+body[data-theme="light"] [style*="color:#64748b"] { color: var(--text-dim) !important; }
+
+/* Modal / overlay backdrop */
+body[data-theme="light"] [style*="background: rgba(0,0,0,0.7)"],
+body[data-theme="light"] [style*="background:rgba(0,0,0,0.7)"] { background: var(--bg-overlay) !important; }
+
+/* Priority badges (HIGH/MEDIUM/LOW/CRITICAL) are now theme-switched in TicketCard.tsx
+ * directly via useThemeStore, so no CSS override needed. */
+
+/* Decorative meta indicators (why / diff / comments) — vivid purple/blue in dark mode,
+   neutral gray in light mode for a monochromatic feel. */
+body[data-theme="light"] [style*="color: #c084fc"],
+body[data-theme="light"] [style*="color:#c084fc"]  { color: var(--meta-icon) !important; }   /* why  */
+body[data-theme="light"] [style*="color: #A855F7"],
+body[data-theme="light"] [style*="color:#A855F7"]  { color: var(--meta-icon) !important; }   /* comments */
+body[data-theme="light"] [style*="color: #3B82F6"],
+body[data-theme="light"] [style*="color:#3B82F6"]  { color: var(--meta-icon) !important; }   /* diff */

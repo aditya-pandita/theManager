@@ -21,9 +21,9 @@ interface Props {
   onProjectChange: (id: string | null) => void;
 }
 
-const inputStyle = {
-  background: '#0c0e14', border: '1px solid #1e2330', borderRadius: '6px',
-  padding: '6px 10px', color: '#e2e8f0', fontSize: '12px', outline: 'none', width: '100%',
+const inputStyle: React.CSSProperties = {
+  background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '6px',
+  padding: '6px 10px', color: 'var(--text)', fontSize: '12px', outline: 'none', width: '100%',
 };
 
 export function ProjectSwitcher({ onProjectChange }: Props) {
@@ -78,27 +78,27 @@ export function ProjectSwitcher({ onProjectChange }: Props) {
         onClick={() => setOpen((o) => !o)}
         style={{
           display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px',
-          background: '#111318', border: '1px solid #1e2330', borderRadius: '8px',
-          color: '#e2e8f0', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
+          background: 'var(--button-bg)', border: '1px solid var(--border)', borderRadius: '8px',
+          color: 'var(--text)', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
           transition: 'border-color 0.15s',
         }}
         onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3B82F6')}
-        onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#1e2330')}
+        onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
       >
-        <span style={{ width: 10, height: 10, borderRadius: '50%', background: active?.color ?? '#4B5563', flexShrink: 0 }} />
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: active?.color ?? 'var(--text-faint)', flexShrink: 0 }} />
         {active?.name ?? 'All Projects'}
-        <span style={{ color: '#6B7280', fontSize: '10px' }}>▾</span>
+        <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>▾</span>
       </button>
 
       {open && (
         <div style={{
           position: 'absolute', top: '110%', left: 0, minWidth: '260px', zIndex: 200,
-          background: '#13161d', border: '1px solid #1e2330', borderRadius: '10px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden',
+          background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.25)', overflow: 'hidden',
         }}>
           {/* All projects option */}
           <button onClick={() => select(null)} style={menuItemStyle(activeProjectId === null)}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4B5563' }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-faint)' }} />
             <span style={{ flex: 1 }}>All Projects</span>
           </button>
 
@@ -107,14 +107,14 @@ export function ProjectSwitcher({ onProjectChange }: Props) {
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
               {p.folderPath && (
-                <span title={p.folderPath} style={{ fontSize: '10px', color: '#4B5563', marginLeft: 4 }}>
+                <span title={p.folderPath} style={{ fontSize: '10px', color: 'var(--text-faint)', marginLeft: 4 }}>
                   📁
                 </span>
               )}
             </button>
           ))}
 
-          <div style={{ borderTop: '1px solid #1e2330', padding: '8px' }}>
+          <div style={{ borderTop: '1px solid var(--border)', padding: '8px' }}>
             {creating ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px' }}>
                 {/* Name */}
@@ -129,7 +129,7 @@ export function ProjectSwitcher({ onProjectChange }: Props) {
 
                 {/* Folder path */}
                 <div>
-                  <div style={{ fontSize: '10px', color: '#6B7280', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Project Folder (optional)
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -167,7 +167,7 @@ export function ProjectSwitcher({ onProjectChange }: Props) {
                     <button
                       key={c}
                       onClick={() => setNewColor(c)}
-                      style={{ width: 18, height: 18, borderRadius: '50%', background: c, border: newColor === c ? '2px solid #fff' : '2px solid transparent', cursor: 'pointer' }}
+                      style={{ width: 18, height: 18, borderRadius: '50%', background: c, border: newColor === c ? '2px solid var(--text)' : '2px solid transparent', cursor: 'pointer' }}
                     />
                   ))}
                 </div>
@@ -182,7 +182,7 @@ export function ProjectSwitcher({ onProjectChange }: Props) {
                   </button>
                   <button
                     onClick={cancelCreate}
-                    style={{ flex: 1, padding: '6px', background: 'transparent', border: '1px solid #1e2330', borderRadius: '6px', color: '#6B7280', cursor: 'pointer', fontSize: '11px' }}
+                    style={{ flex: 1, padding: '6px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '11px' }}
                   >
                     Cancel
                   </button>
@@ -191,7 +191,7 @@ export function ProjectSwitcher({ onProjectChange }: Props) {
             ) : (
               <button
                 onClick={() => setCreating(true)}
-                style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px dashed #1e2330', borderRadius: '6px', color: '#6B7280', cursor: 'pointer', fontSize: '11px', textAlign: 'center' }}
+                style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px dashed var(--border)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '11px', textAlign: 'center' }}
               >
                 + New Project
               </button>
@@ -203,11 +203,12 @@ export function ProjectSwitcher({ onProjectChange }: Props) {
   );
 }
 
-function menuItemStyle(active: boolean) {
+function menuItemStyle(active: boolean): React.CSSProperties {
   return {
-    display: 'flex' as const, alignItems: 'center' as const, gap: '8px',
-    width: '100%', padding: '8px 12px', border: 'none', textAlign: 'left' as const,
-    background: active ? '#172554' : 'transparent', color: active ? '#93c5fd' : '#e2e8f0',
-    cursor: 'pointer' as const, fontSize: '12px', transition: 'background 0.1s',
+    display: 'flex', alignItems: 'center', gap: '8px',
+    width: '100%', padding: '8px 12px', border: 'none', textAlign: 'left',
+    background: active ? '#172554' : 'transparent',
+    color: active ? '#93c5fd' : 'var(--text)',
+    cursor: 'pointer', fontSize: '12px', transition: 'background 0.1s',
   };
 }

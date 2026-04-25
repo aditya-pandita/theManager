@@ -16,7 +16,7 @@ export function Column({ label, color, tickets, onTicketClick }: ColumnProps) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px 14px', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '3px', background: color }} />
-          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: '#94a3b8' }}>{label}</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--section-label)' }}>{label}</span>
         </div>
         <span style={{ fontSize: '10px', fontWeight: 600, color, background: `${color}15`, padding: '2px 8px', borderRadius: '10px', minWidth: '20px', textAlign: 'center' }}>
           {tickets.length}

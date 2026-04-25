@@ -1,5 +1,6 @@
 import { ProgressBar } from '../shared/ProgressBar';
 import { ProjectSwitcher } from './ProjectSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 import type { Ticket } from '../../types';
 
 interface HeaderProps {
@@ -12,7 +13,7 @@ export function Header({ tickets, onProjectChange }: HeaderProps) {
   const done = tickets.filter((t) => t.status === 'done').length;
 
   return (
-    <div style={{ borderBottom: '1px solid #1e2330', padding: '16px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ borderBottom: '1px solid var(--border)', padding: '16px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         <div style={{
           width: '36px', height: '36px', borderRadius: '10px',
@@ -33,6 +34,7 @@ export function Header({ tickets, onProjectChange }: HeaderProps) {
           <span style={{ color: '#10B981', fontWeight: 600 }}>{done}</span>/{total} completed
         </div>
         <ProgressBar value={done} max={total} width={100} color="#10B981" />
+        <ThemeToggle />
       </div>
     </div>
   );

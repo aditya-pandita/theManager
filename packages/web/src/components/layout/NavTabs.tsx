@@ -17,7 +17,7 @@ const TABS: Array<{ id: View; label: string; icon: JSX.Element }> = [
 
 export function NavTabs({ activeView, onViewChange, hookCount = 0 }: NavTabsProps) {
   return (
-    <div style={{ display: 'flex', borderBottom: '1px solid #1e233050', padding: '0 28px' }}>
+    <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 28px' }}>
       {TABS.map((tab) => (
         <button
           key={tab.id}
@@ -25,7 +25,7 @@ export function NavTabs({ activeView, onViewChange, hookCount = 0 }: NavTabsProp
           style={{
             display: 'flex', alignItems: 'center', gap: '6px',
             padding: '10px 16px', border: 'none', background: 'transparent',
-            color: activeView === tab.id ? '#e2e8f0' : '#6B7280',
+            color: activeView === tab.id ? 'var(--text)' : 'var(--text-muted)',
             cursor: 'pointer', fontSize: '12px', fontWeight: 600,
             borderBottom: activeView === tab.id ? '2px solid #3B82F6' : '2px solid transparent',
             transition: 'all 0.15s',
