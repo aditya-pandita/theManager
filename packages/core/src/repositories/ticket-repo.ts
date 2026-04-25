@@ -49,6 +49,31 @@ export const ticketRepo = {
     return updated as unknown as Ticket;
   },
 
+  async updatePipelineState(
+    id: string,
+    state: 'idle' | 'running' | 'paused' | 'blocked' | 'completed' | 'awaiting_approval',
+    currentAgent: string | null = null,
+  ): Promise<void> {
+    await db
+      .update(tickets)
+      .set({ pipelineState: state, currentAgent, updatedAt: now() } as any)
+      .where(eq(tickets.id, id));
+  },
+
+  async setPaused(id: string, paused: boolean): Promise<void> {
+    await db
+      .update(tickets)
+      .set({ isPaused: paused, updatedAt: now() } as any)
+      .where(eq(tickets.id, id));
+  },
+
+  async setLocked(id: string, locked: boolean): Promise<void> {
+    await db
+      .update(tickets)
+      .set({ isLocked: locked, updatedAt: now() } as any)
+      .where(eq(tickets.id, id));
+  },
+
   async delete(id: string): Promise<void> {
     await db.delete(tickets).where(eq(tickets.id, id));
   },

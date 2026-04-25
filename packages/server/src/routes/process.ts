@@ -2,7 +2,7 @@ import { Router } from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ticketService, reasoningService, changelogRepo } from '@decidr-code/core';
+import { ticketService, reasoningService, changelogRepo, GEMMA_MODEL } from '@decidr-code/core';
 import type { NewReasoning } from '@decidr-code/core';
 import { sendJSON, sendError } from '../utils/http';
 
@@ -40,11 +40,11 @@ router.post('/', async (req, res) => {
 
     const genai = new GoogleGenerativeAI(apiKey);
     const model = genai.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: GEMMA_MODEL,
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: 'application/json',
-        maxOutputTokens: 4096,
+        maxOutputTokens: 12288,
       },
     });
 
@@ -62,12 +62,16 @@ router.post('/', async (req, res) => {
         2
       )}`
     );
-    const text = result.response.text();
+    // Filter out thinking parts (Gemma 4 has them and the SDK includes them in .text())
+    const candidate = result.response.candidates?.[0];
+    const parts: Array<{ text?: string; thought?: boolean }> = (candidate?.content?.parts ?? []) as any;
+    const answerParts = parts.filter((p) => p && typeof p.text === 'string' && !p.thought);
+    const text = answerParts.length > 0 ? answerParts.map((p) => p.text).join('') : result.response.text();
     const parsed = JSON.parse(text) as NewReasoning;
-    parsed.timeMs = parsed.timeMs || Date.now() - start;
+    parsed.timeMs = Date.now() - start;
 
     const saved = await reasoningService.saveReasoning(ticketId, parsed);
-    await changelogRepo.append(ticketId, 'Gemini generated reasoning', 'Gemini');
+    await changelogRepo.append(ticketId, 'Gemma generated reasoning', 'Gemma');
 
     sendJSON(res, { reasoning: saved });
   } catch (err: unknown) {

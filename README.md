@@ -29,7 +29,7 @@ Decidr Code is a desktop application that combines a Jira-style kanban board wit
 | State | Zustand |
 | API | Express 4 (REST, port 3117) |
 | Database | PostgreSQL 16 via Drizzle ORM |
-| AI | Anthropic Claude API |
+| AI | Gemma 4 (26B MoE) via Google Gemini API |
 | Editor integration | Model Context Protocol (MCP) |
 | Language | TypeScript throughout |
 
@@ -78,7 +78,7 @@ Five columns: **Backlog → Todo → In Progress → Review → Done**. Tickets 
 
 ### AI Reasoning Trees
 
-Clicking **Process Ticket** sends the ticket to Claude, which returns:
+Clicking **Process Ticket** sends the ticket to Gemma 4, which returns:
 
 - A **decision tree** with typed nodes: `problem`, `investigation`, `discovery`, `root_cause`, `decision`, `chosen`, `rejected`, `ruled_out`
 - A **confidence score** (0–1) on the quality of the reasoning
@@ -86,6 +86,16 @@ Clicking **Process Ticket** sends the ticket to Claude, which returns:
 - A **summary** of the conclusion
 
 Processing phases tracked: Intake → Scan → Research → Analysis → Architecture → Alternatives → Implementation → Edge Cases → Validation
+
+### Why Gemma 4
+
+Decidr Code's 7-agent pipeline (Planner → Architect → Coder → Tester → Reviewer → Debugger → Docs) runs on **Gemma 4 26B MoE** via the Google Gemini API. Gemma 4 is open-weight under **Apache 2.0**, which means:
+
+- The pipeline can be redeployed on a self-hosted Gemma instance for teams that can't send code to a third-party API.
+- Commercial use, modification, and redistribution are allowed without royalties.
+- The decision-tree audit trail and the model that produced it are equally portable.
+
+The MoE variant gives strong reasoning quality with only 4B active parameters per token, which keeps latency manageable when running 7 sequential agents per ticket.
 
 ### Git Integration
 

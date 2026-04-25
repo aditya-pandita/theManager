@@ -43,7 +43,7 @@ export { chatService } from './services/chat-service';
 export { activityService } from './activity/activity-service';
 
 // Agents
-export { agentRegistry } from './agents/registry';
+export { agentRegistry, GEMMA_MODEL } from './agents/registry';
 export { orchestrator } from './agents/orchestrator';
 export { contextStore } from './agents/context-store';
 

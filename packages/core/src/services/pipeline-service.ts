@@ -32,6 +32,17 @@ export const pipelineService = {
     const ticket = await ticketRepo.findById(ticketId);
     if (!ticket) throw new Error('Ticket not found');
 
+    // Guard: refuse to start a second pipeline while one is in flight.
+    // Without this, a stray UI click or curl re-fire spawns a parallel chain and
+    // pollutes the agent_runs timeline.
+    const currentState = (ticket as any).pipelineState;
+    if (currentState === 'running' || currentState === 'awaiting_approval') {
+      throw new Error(`Pipeline is already ${currentState} for this ticket`);
+    }
+    if ((ticket as any).isLocked) {
+      throw new Error('Ticket is locked — unlock before running the pipeline');
+    }
+
     const type = (ticketType as TicketType) ?? detectTicketType(ticket);
     // Run pipeline async — don't await so the HTTP response returns immediately
     orchestrator.runPipeline(ticket, type).catch((err) =>
@@ -65,21 +76,12 @@ export const pipelineService = {
   },
 
   async pause(ticketId: string): Promise<void> {
-    await ticketRepo.update(ticketId, {} as any);
-    // Update isPaused via raw update — ticketRepo.update only takes known fields
-    // We update directly using the db import pattern
-    const { db } = await import('../db/connection');
-    const { tickets } = await import('../db/schema');
-    const { eq } = await import('drizzle-orm');
-    await db.update(tickets).set({ isPaused: true } as any).where(eq(tickets.id, ticketId));
+    await ticketRepo.setPaused(ticketId, true);
     activityService.log({ ticketId, actorType: 'user', actionType: 'pipeline_paused' }).catch(() => {});
   },
 
   async resume(ticketId: string): Promise<void> {
-    const { db } = await import('../db/connection');
-    const { tickets } = await import('../db/schema');
-    const { eq } = await import('drizzle-orm');
-    await db.update(tickets).set({ isPaused: false } as any).where(eq(tickets.id, ticketId));
+    await ticketRepo.setPaused(ticketId, false);
 
     const ticket = await ticketRepo.findById(ticketId);
     if (ticket) {
@@ -100,10 +102,7 @@ export const pipelineService = {
     if (checkpoints.length === 0) throw new Error('No pending checkpoint');
     await checkpointRepo.approve(checkpoints[0].id);
 
-    const { db } = await import('../db/connection');
-    const { tickets } = await import('../db/schema');
-    const { eq } = await import('drizzle-orm');
-    await db.update(tickets).set({ isPaused: false } as any).where(eq(tickets.id, ticketId));
+    await ticketRepo.setPaused(ticketId, false);
 
     const ticket = await ticketRepo.findById(ticketId);
     if (ticket) {
@@ -136,10 +135,7 @@ export const pipelineService = {
   },
 
   async lock(ticketId: string, locked: boolean): Promise<void> {
-    const { db } = await import('../db/connection');
-    const { tickets } = await import('../db/schema');
-    const { eq } = await import('drizzle-orm');
-    await db.update(tickets).set({ isLocked: locked } as any).where(eq(tickets.id, ticketId));
+    await ticketRepo.setLocked(ticketId, locked);
     activityService.log({ ticketId, actorType: 'user', actionType: 'ticket_locked', payload: { locked } }).catch(() => {});
   },
 };

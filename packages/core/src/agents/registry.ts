@@ -8,48 +8,53 @@ import { TesterAgent } from './tester-agent';
 import { DebuggerAgent } from './debugger-agent';
 import { DocsAgent } from './docs-agent';
 
+// Gemma 4 26B MoE — open-weight, Apache 2.0, served via the same Gemini API.
+// Has thinking tokens (counted against maxOutputTokens) but does NOT support
+// thinkingConfig, so token budgets are sized to leave room for both thinking and output.
+export const GEMMA_MODEL = 'gemma-4-26b-a4b-it';
+
 const DEFAULT_CONFIGS: Record<AgentName, AgentConfig> = {
   planner: {
     name: 'planner', displayName: 'Planner',
-    model: 'gemini-2.0-flash', systemPromptPath: 'planner.md',
+    model: GEMMA_MODEL, systemPromptPath: 'planner.md',
     toolAllowlist: ['create-ticket', 'list-tickets'],
-    maxTokens: 4096, maxRetries: 3, retryBackoffMs: 2000, timeoutMs: 60000,
+    maxTokens: 12288, maxRetries: 3, retryBackoffMs: 2000, timeoutMs: 90000,
   },
   architect: {
     name: 'architect', displayName: 'Architect',
-    model: 'gemini-2.0-flash', systemPromptPath: 'architect.md',
+    model: GEMMA_MODEL, systemPromptPath: 'architect.md',
     toolAllowlist: ['list-tickets', 'get-reasoning'],
-    maxTokens: 4096, maxRetries: 3, retryBackoffMs: 2000, timeoutMs: 60000,
+    maxTokens: 12288, maxRetries: 3, retryBackoffMs: 2000, timeoutMs: 90000,
   },
   coder: {
     name: 'coder', displayName: 'Coder',
-    model: 'gemini-2.0-flash', systemPromptPath: 'coder.md',
+    model: GEMMA_MODEL, systemPromptPath: 'coder.md',
     toolAllowlist: ['create-branch', 'get-git-history'],
-    maxTokens: 8192, maxRetries: 3, retryBackoffMs: 2000, timeoutMs: 120000,
+    maxTokens: 32768, maxRetries: 3, retryBackoffMs: 2000, timeoutMs: 180000,
   },
   reviewer: {
     name: 'reviewer', displayName: 'Reviewer',
-    model: 'gemini-2.0-flash', systemPromptPath: 'reviewer.md',
+    model: GEMMA_MODEL, systemPromptPath: 'reviewer.md',
     toolAllowlist: ['add-comment', 'get-reasoning'],
-    maxTokens: 4096, maxRetries: 2, retryBackoffMs: 2000, timeoutMs: 60000,
+    maxTokens: 12288, maxRetries: 2, retryBackoffMs: 2000, timeoutMs: 90000,
   },
   tester: {
     name: 'tester', displayName: 'Tester',
-    model: 'gemini-2.0-flash', systemPromptPath: 'tester.md',
+    model: GEMMA_MODEL, systemPromptPath: 'tester.md',
     toolAllowlist: ['create-ticket', 'get-reasoning'],
-    maxTokens: 4096, maxRetries: 2, retryBackoffMs: 2000, timeoutMs: 90000,
+    maxTokens: 16384, maxRetries: 2, retryBackoffMs: 2000, timeoutMs: 120000,
   },
   debugger: {
     name: 'debugger', displayName: 'Debugger',
-    model: 'gemini-2.0-flash', systemPromptPath: 'debugger.md',
+    model: GEMMA_MODEL, systemPromptPath: 'debugger.md',
     toolAllowlist: ['get-reasoning', 'get-git-history'],
-    maxTokens: 4096, maxRetries: 3, retryBackoffMs: 3000, timeoutMs: 90000,
+    maxTokens: 12288, maxRetries: 3, retryBackoffMs: 3000, timeoutMs: 120000,
   },
   docs: {
     name: 'docs', displayName: 'Docs',
-    model: 'gemini-2.0-flash', systemPromptPath: 'docs.md',
+    model: GEMMA_MODEL, systemPromptPath: 'docs.md',
     toolAllowlist: ['get-reasoning'],
-    maxTokens: 2048, maxRetries: 2, retryBackoffMs: 1000, timeoutMs: 30000,
+    maxTokens: 8192, maxRetries: 2, retryBackoffMs: 1000, timeoutMs: 60000,
   },
 };
 

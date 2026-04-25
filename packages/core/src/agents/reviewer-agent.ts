@@ -1,4 +1,4 @@
-import { BaseAgent } from './base-agent';
+import { BaseAgent, safeJsonParse } from './base-agent';
 import type { AgentConfig, AgentInput, AgentOutput } from '../types/agent';
 
 export class ReviewerAgent extends BaseAgent {
@@ -18,7 +18,7 @@ export class ReviewerAgent extends BaseAgent {
   }
 
   parseResponse(raw: string, ticketId: string): AgentOutput {
-    const parsed = JSON.parse(raw);
+    const parsed = safeJsonParse(raw);
     return {
       agent: 'reviewer',
       ticketId,
