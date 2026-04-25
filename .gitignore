@@ -10,3 +10,4 @@ pgdata/
 .decidr/
 *.tsbuildinfo
 .DS_Store
+.claude/

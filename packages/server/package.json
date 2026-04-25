@@ -9,14 +9,15 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@decidr-code/core": "*",
     "@anthropic-ai/sdk": "^0.20.9",
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "@decidr-code/core": "*",
+    "@google/generative-ai": "^0.24.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
     "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "@types/node": "^20.12.12"
   }
 }
