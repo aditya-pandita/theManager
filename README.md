@@ -123,22 +123,22 @@ Processing phases tracked: Intake → Scan → Research → Analysis → Archite
 
 ### Why Gemma 4
 
-Decidr Code's 7-agent pipeline (Planner → Architect → Coder → Tester → Reviewer → Debugger → Docs) runs on **Gemma 4 26B MoE** via the Google Gemini API. Gemma 4 is open-weight under **Apache 2.0**, which means:
+Decidr Code's specialist agents — Planner, Architect, Coder, Tester, Reviewer, Debugger, Docs — all run on **Gemma 4 26B MoE** via the Google Gemini API. Gemma 4 is open-weight under **Apache 2.0**, which means:
 
 - The pipeline can be redeployed on a self-hosted Gemma instance for teams that can't send code to a third-party API.
 - Commercial use, modification, and redistribution are allowed without royalties.
 - The decision-tree audit trail and the model that produced it are equally portable.
 
-The MoE variant gives strong reasoning quality with only 4B active parameters per token, which keeps latency manageable when running 7 sequential agents per ticket.
+The MoE variant gives strong reasoning quality with only 4B active parameters per token, which keeps latency manageable when running multiple sequential agents per ticket.
 
-### End-to-end workflow
+### End-to-end workflow (feature ticket — 6 agents)
 
 ```
-1. User files a ticket on the kanban board
+1. User files a ticket on the kanban board (tags decide which chain runs)
    ↓
 2. Click "▶ Run Pipeline" on the Pipeline tab
    ↓
-3. Gemma 4 agents run in sequence (~5–7 minutes)
+3. Gemma 4 agents run in sequence (~5–7 minutes for a feature)
      Planner   ──▶ tasks + acceptance criteria
      Architect ──▶ design note, file structure, patterns
      Coder     ──▶ full file contents + commit message
@@ -146,7 +146,7 @@ The MoE variant gives strong reasoning quality with only 4B active parameters pe
      Reviewer  ──▶ score + per-file issues
      Docs      ──▶ updated README, changelog
    ↓
-4. Reasoning tab shows a 6-branch consolidated decision tree
+4. Reasoning tab shows a consolidated decision tree (one branch per agent)
    ↓
 5. Click "✓ Apply for real" on the Apply Coder Output panel
      • Files written to /tmp/decidr-output/<ticketId>/  (sandbox)
@@ -346,12 +346,31 @@ Base URL: `http://localhost:3117/api`
 
 ## AI Agents
 
-The `agents/` directory contains Claude agent definitions for specialized analysis:
+The `agents/` directory contains the system prompts for each specialist agent in the pipeline. All run on **Gemma 4 26B MoE**.
 
-- `bug-triager.md` — Triage and classify incoming bugs
-- `code-reviewer.md` — Structured code review
-- `perf-analyzer.md` — Performance bottleneck analysis
-- `refactor-planner.md` — Refactoring strategy and scope
+| Agent | Prompt file | Job |
+|---|---|---|
+| 🧭 Planner   | `agents/planner.md`   | Decompose ticket into sub-tasks with acceptance criteria |
+| 🏛️ Architect | `agents/architect.md` | Propose file structure, design patterns, affected components |
+| 👨‍💻 Coder     | `agents/coder.md`     | Generate full file contents + commit message |
+| 🧪 Tester    | `agents/tester.md`    | Write tests (TDD red phase first) + report results |
+| 🔍 Reviewer  | `agents/reviewer.md`  | Score the changes; surface issues per file |
+| 🐞 Debugger  | `agents/debugger.md`  | Analyze a bug, identify root cause, produce a fix |
+| 📝 Docs      | `agents/docs.md`      | Update README, JSDoc, and changelog |
+
+### Routing by ticket type
+
+The orchestrator chooses which agents run based on the ticket's tags:
+
+| Tag | Pipeline chain |
+|---|---|
+| `feature` *(default)* | Planner → Architect → Coder → Tester → Reviewer → Docs |
+| `bug` | Debugger → Tester → Reviewer → Docs |
+| `refactor` | Architect → Coder → Tester → Reviewer → Docs |
+| `docs` | Docs → Reviewer |
+| `test` | Tester |
+
+The chain is defined in [`packages/core/src/agents/orchestrator.ts`](packages/core/src/agents/orchestrator.ts). All chains end with `Docs` so every shipped change gets a changelog entry.
 
 ---
 

@@ -103,8 +103,8 @@ type SSECallback = (event: object) => void;
 
 const PIPELINE_ROUTES: Record<TicketType, AgentName[]> = {
   feature:  ['planner', 'architect', 'coder', 'tester', 'reviewer', 'docs'],
-  bug:      ['debugger', 'tester', 'reviewer'],
-  refactor: ['architect', 'coder', 'tester', 'reviewer'],
+  bug:      ['debugger', 'tester', 'reviewer', 'docs'],
+  refactor: ['architect', 'coder', 'tester', 'reviewer', 'docs'],
   docs:     ['docs', 'reviewer'],
   test:     ['tester'],
 };
