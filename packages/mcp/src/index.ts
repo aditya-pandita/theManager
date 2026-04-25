@@ -19,13 +19,15 @@ import { registerTicketResource } from './resources/ticket';
 import { registerStatsResource } from './resources/stats';
 import { registerAnalyzeTicketPrompt } from './prompts/analyze-ticket';
 import { registerReviewDiffPrompt } from './prompts/review-diff';
+import { registerAgentTools } from './tools/agent-tools';
+import { registerTddTools } from './tools/tdd-tools';
 
 const server = new McpServer({
   name: 'decidr-code',
-  version: '1.0.0',
+  version: '2.0.0',
 });
 
-// Tools
+// Phase 1 tools
 registerCreateTicket(server);
 registerUpdateTicket(server);
 registerMoveTicket(server);
@@ -38,6 +40,10 @@ registerLinkBranch(server);
 registerGetGitHistory(server);
 registerCreateBranch(server);
 registerExportProject(server);
+
+// Phase 2 tools
+registerAgentTools(server);
+registerTddTools(server);
 
 // Resources
 registerBoardResource(server);

@@ -13,6 +13,11 @@ import userStoriesRouter from './routes/user-stories';
 import gitRouter from './routes/git';
 import ticketGitRouter from './routes/ticket-git';
 import exportRouter from './routes/export';
+import agentsRouter from './routes/agents';
+import pipelineRouter from './routes/pipeline';
+import testsRouter from './routes/tests';
+import chatRouter from './routes/chat';
+import activityRouter from './routes/activity';
 
 const app = express();
 const PORT = parseInt(process.env.PORT ?? '3117', 10);
@@ -20,7 +25,7 @@ const PORT = parseInt(process.env.PORT ?? '3117', 10);
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Existing routes
 app.use('/api/tickets', ticketsRouter);
 app.use('/api/tickets/:id/comments', commentsRouter);
 app.use('/api/tickets/:id/reasoning', reasoningRouter);
@@ -33,6 +38,13 @@ app.use('/api/tickets/:id/user-story', userStoriesRouter);
 app.use('/api/git', gitRouter);
 app.use('/api/tickets/:id/git', ticketGitRouter);
 app.use('/api/export', exportRouter);
+
+// Phase 2 routes
+app.use('/api/agents',   agentsRouter);
+app.use('/api/pipeline', pipelineRouter);
+app.use('/api/tests',    testsRouter);
+app.use('/api/tickets',  chatRouter);
+app.use('/api/activity', activityRouter);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));

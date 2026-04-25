@@ -10,10 +10,14 @@ import { MediaDrop } from './MediaDrop';
 import { UserStoryTab } from './UserStoryTab';
 import { GitTab } from './GitTab';
 import { ReasoningTab } from '../reasoning/ReasoningTab';
+import { PipelinePanel } from '../agents/PipelinePanel';
+import { TestResultsPanel } from '../testing/TestResultsPanel';
+import { ChatPanel } from '../chat/ChatPanel';
+import { ActivityFeed } from '../activity/ActivityFeed';
 import { api } from '../../api/client';
 import type { Ticket, Status } from '../../types';
 
-type TabId = 'story' | 'diff' | 'reasoning' | 'git' | 'comments' | 'history' | 'media';
+type TabId = 'story' | 'diff' | 'reasoning' | 'git' | 'comments' | 'history' | 'media' | 'pipeline' | 'tests' | 'chat' | 'activity';
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -53,7 +57,11 @@ export function TicketDetail({ ticket, onClose, onMove, onRefresh }: TicketDetai
         <TabBar activeTab={tab} onTabChange={(t) => setTab(t as TabId)} commentCount={ticket.comments?.length ?? 0} gitCount={(ticket.gitBranches?.length ?? 0) + (ticket.gitCommits?.length ?? 0)} />
 
         <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
-          {tab === 'story' && <UserStoryTab ticketId={ticket.id} initial={ticket.userStory} />}
+          {tab === 'story'    && <UserStoryTab ticketId={ticket.id} initial={ticket.userStory} />}
+          {tab === 'pipeline' && <PipelinePanel ticketId={ticket.id} />}
+          {tab === 'chat'     && <ChatPanel ticketId={ticket.id} />}
+          {tab === 'tests'    && <TestResultsPanel ticketId={ticket.id} />}
+          {tab === 'activity' && <ActivityFeed ticketId={ticket.id} />}
           {tab === 'diff' && (
             <div>
               <DiffView diff={ticket.diff} />

@@ -1,7 +1,7 @@
 import { Icons } from '../shared/Icons';
 import type { ReactElement } from 'react';
 
-type TabId = 'story' | 'diff' | 'reasoning' | 'git' | 'comments' | 'history' | 'media';
+type TabId = 'story' | 'diff' | 'reasoning' | 'git' | 'comments' | 'history' | 'media' | 'pipeline' | 'tests' | 'chat' | 'activity';
 
 interface Tab {
   id: TabId;
@@ -19,10 +19,14 @@ interface TabBarProps {
 export function TabBar({ activeTab, onTabChange, commentCount, gitCount = 0 }: TabBarProps) {
   const tabs: Tab[] = [
     { id: 'story',     icon: <Icons.User />,    label: 'Story' },
-    { id: 'diff',      icon: <Icons.Code />,    label: 'Diff' },
+    { id: 'pipeline',  icon: <Icons.Brain />,   label: 'Pipeline' },
+    { id: 'chat',      icon: <Icons.Chat />,    label: 'Chat' },
+    { id: 'tests',     icon: <Icons.Code />,    label: 'Tests' },
+    { id: 'activity',  icon: <Icons.History />, label: 'Activity' },
     { id: 'reasoning', icon: <Icons.Brain />,   label: 'Reasoning' },
     { id: 'git',       icon: <Icons.Git />,     label: gitCount > 0 ? `Git (${gitCount})` : 'Git' },
     { id: 'comments',  icon: <Icons.Chat />,    label: `Comments (${commentCount})` },
+    { id: 'diff',      icon: <Icons.Code />,    label: 'Diff' },
     { id: 'history',   icon: <Icons.History />, label: 'History' },
     { id: 'media',     icon: <Icons.Image />,   label: 'Media' },
   ];

@@ -2,6 +2,7 @@ import { gitBranchRepo } from '../repositories/git-branch-repo';
 import { gitCommitRepo } from '../repositories/git-commit-repo';
 import { ticketRepo } from '../repositories/ticket-repo';
 import { changelogRepo } from '../repositories/changelog-repo';
+import { activityService } from '../activity/activity-service';
 import type { GitBranch, NewGitBranch } from '../repositories/git-branch-repo';
 import type { GitCommit, NewGitCommit } from '../repositories/git-commit-repo';
 
@@ -39,6 +40,7 @@ export const gitService = {
     });
 
     await changelogRepo.append(parsed.ticketId, `Branch linked: ${branchName}`, 'Git');
+    activityService.log({ ticketId: parsed.ticketId, actorType: 'system', actionType: 'branch_linked', payload: { branchName } }).catch(() => {});
     return { branch, ticketId: parsed.ticketId };
   },
 
@@ -92,6 +94,7 @@ export const gitService = {
     };
 
     const created = await gitCommitRepo.create(commit);
+    activityService.log({ ticketId, actorType: 'system', actionType: 'commit_detected', payload: { hash: payload.hash, message: payload.message } }).catch(() => {});
     return { commit: created, ticketId };
   },
 
@@ -101,6 +104,7 @@ export const gitService = {
 
     await gitBranchRepo.updateStatus(branch.id, 'merged', new Date(), payload.mergedBy);
     await changelogRepo.append(branch.ticketId, `Branch merged: ${payload.branch}`, payload.mergedBy ?? 'Git');
+    activityService.log({ ticketId: branch.ticketId, actorType: 'system', actionType: 'merge_detected', payload: { branch: payload.branch, mergedBy: payload.mergedBy } }).catch(() => {});
     return true;
   },
 

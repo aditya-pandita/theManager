@@ -2,6 +2,7 @@ import { execFile } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { hookRepo } from '../repositories/hook-repo';
+import { activityService } from '../activity/activity-service';
 
 export async function fireHook(
   event: string,
@@ -12,6 +13,7 @@ export async function fireHook(
   hookRepo.append(event, payload).catch((err) =>
     console.error(`[hooks] DB log failed for ${event}:`, err)
   );
+  activityService.log({ actorType: 'hook', actorName: event, actionType: 'hook_fired', payload }).catch(() => {});
 
   // Execute bash script if it exists
   const scriptPath = path.resolve(hooksDir, `${event}.sh`);
