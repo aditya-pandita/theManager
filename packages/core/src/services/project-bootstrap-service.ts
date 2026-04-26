@@ -3,9 +3,28 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ticketService } from './ticket-service';
+import { userStoryRepo } from '../repositories/user-story-repo';
 import { safeJsonParse } from '../agents/base-agent';
 import { GEMMA_MODEL } from '../agents/registry';
 import type { Priority } from '../types/ticket';
+
+interface ParsedTicket {
+  title: string;
+  description: string;
+  priority: Priority;
+  tags: string[];
+  role?: string;
+  benefit?: string;
+  acceptanceCriteria?: string;
+}
+
+function inferRole(tags: string[]): string {
+  const set = new Set((tags ?? []).map((t) => t.toLowerCase()));
+  if (set.has('bug')) return 'tester';
+  if (set.has('docs')) return 'technical writer';
+  if (set.has('epic')) return 'product manager';
+  return 'developer';
+}
 
 export const projectBootstrapService = {
   initFolder(folderPath: string, projectId: string, projectName: string): void {
@@ -22,9 +41,7 @@ export const projectBootstrapService = {
     );
   },
 
-  async parseDocument(text: string): Promise<{
-    tickets: Array<{ title: string; description: string; priority: Priority; tags: string[] }>;
-  }> {
+  async parseDocument(text: string): Promise<{ tickets: ParsedTicket[] }> {
     dotenv.config({ path: path.resolve(__dirname, '../../../../.env'), override: true });
     const apiKey = process.env.GEMINI_KEY ?? process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error('GEMINI_KEY not set');
@@ -32,7 +49,7 @@ export const projectBootstrapService = {
     const genai = new GoogleGenerativeAI(apiKey);
     const model = genai.getGenerativeModel({
       model: GEMMA_MODEL,
-      systemInstruction: `You are a software project analyst. Extract all features, requirements, and tasks from the provided document and convert them into a list of development tickets.
+      systemInstruction: `You are a software project analyst. Extract all features, requirements, and tasks from the provided document and convert them into a list of development tickets — each with a real user story attached.
 
 Each ticket should be:
 - Focused on ONE feature or requirement
@@ -41,6 +58,11 @@ Each ticket should be:
 - Tagged appropriately (use: feature, bug, refactor, docs, test, infra, perf, style)
 - Prioritized: critical (must-have for launch), high (important), medium (standard), low (nice-to-have)
 
+For the user-story fields, write them from the perspective of the person who benefits:
+- "role": who is asking (e.g. "developer", "end user", "tester", "product manager", "technical writer")
+- "benefit": the outcome or value they get ("so that ...")
+- "acceptanceCriteria": 2-4 bullet points starting with "- ", each describing a concrete check that proves the ticket is done
+
 Return ONLY valid JSON:
 {
   "tickets": [
@@ -48,7 +70,10 @@ Return ONLY valid JSON:
       "title": "short actionable title",
       "description": "what needs to be implemented and why",
       "priority": "critical" | "high" | "medium" | "low",
-      "tags": ["feature"]
+      "tags": ["feature"],
+      "role": "developer",
+      "benefit": "they can ...",
+      "acceptanceCriteria": "- ...\\n- ..."
     }
   ]
 }`,
@@ -81,14 +106,33 @@ Return ONLY valid JSON:
     const createdIds: string[] = [];
 
     for (const t of tickets) {
+      const tags = t.tags ?? ['feature'];
       const ticket = await ticketService.createTicket({
         title: t.title,
         description: t.description,
         priority: t.priority ?? 'medium',
-        tags: t.tags ?? ['feature'],
+        tags,
         projectId,
       });
       createdIds.push(ticket.id);
+
+      // Always create a user story so the Story tab is populated immediately.
+      // Falls back to heuristics for any field Gemma omitted — same shape as the CSV importer.
+      const role = (t.role ?? '').trim() || inferRole(tags);
+      const benefit = (t.benefit ?? '').trim() || (t.description ?? '').trim() || 'this capability is delivered as described.';
+      const acceptanceCriteria = (t.acceptanceCriteria ?? '').trim();
+      try {
+        await userStoryRepo.upsert(ticket.id, {
+          role,
+          want: t.title,
+          benefit,
+          acceptanceCriteria,
+          files: [],
+        });
+      } catch (err) {
+        // Story upsert is best-effort — never fail the whole import because one ticket's story write hiccuped.
+        console.error('[bootstrap] user_story upsert failed for', ticket.id, '-', (err as Error).message);
+      }
     }
 
     return createdIds;
