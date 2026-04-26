@@ -8,12 +8,12 @@ interface Props {
 }
 
 const fieldStyle = {
-  background: '#0c0e14', border: '1px solid #1e2330', borderRadius: '8px',
-  padding: '10px 14px', color: '#e2e8f0', fontSize: '13px', outline: 'none',
+  background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px',
+  padding: '10px 14px', color: '#1e293b', fontSize: '13px', outline: 'none',
   width: '100%', resize: 'vertical' as const, fontFamily: 'inherit', lineHeight: '1.5',
 };
 
-const labelStyle = { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '6px', display: 'block' };
+const labelStyle = { fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '6px', display: 'block' };
 
 export function UserStoryTab({ ticketId, initial }: Props) {
   const [role, setRole] = useState(initial?.role ?? '');

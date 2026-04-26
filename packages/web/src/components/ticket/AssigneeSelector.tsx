@@ -66,7 +66,7 @@ export function AssigneeSelector({ ticketId, assignedTo, onAssigned }: Props) {
       {/* Trigger */}
       <button
         onClick={() => setOpen((o) => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: '#1e2533', border: '1px solid #1e2330', borderRadius: '8px', cursor: 'pointer', color: '#e2e8f0', fontSize: '12px' }}
+        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '20px', cursor: 'pointer', color: '#374151', fontSize: '12px' }}
       >
         {assignedMember ? (
           <>
@@ -77,8 +77,8 @@ export function AssigneeSelector({ ticketId, assignedTo, onAssigned }: Props) {
           </>
         ) : (
           <>
-            <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '12px' }}>?</div>
-            <span style={{ color: '#64748b' }}>Unassigned</span>
+            <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '12px' }}>?</div>
+            <span style={{ color: '#94a3b8' }}>Unassigned</span>
           </>
         )}
         <span style={{ color: '#475569', fontSize: '9px' }}>▾</span>
@@ -87,7 +87,7 @@ export function AssigneeSelector({ ticketId, assignedTo, onAssigned }: Props) {
       {/* Dropdown */}
       {open && (
         <div
-          style={{ position: 'absolute', top: '110%', left: 0, width: '260px', zIndex: 300, background: '#13161d', border: '1px solid #1e2330', borderRadius: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', overflow: 'hidden' }}
+          style={{ position: 'absolute', top: '110%', left: 0, width: '260px', zIndex: 300, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.10)', overflow: 'hidden' }}
         >
           {/* Search */}
           <div style={{ padding: '8px' }}>
@@ -97,7 +97,7 @@ export function AssigneeSelector({ ticketId, assignedTo, onAssigned }: Props) {
               onChange={(e) => { setQuery(e.target.value); setFocusIdx(0); }}
               onKeyDown={onKey}
               placeholder="Search team members…"
-              style={{ width: '100%', background: '#0d1117', border: '1px solid #1e2330', borderRadius: '7px', padding: '7px 10px', color: '#e2e8f0', fontSize: '12px', boxSizing: 'border-box', outline: 'none' }}
+              style={{ width: '100%', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '7px', padding: '7px 10px', color: '#1e293b', fontSize: '12px', boxSizing: 'border-box', outline: 'none' }}
             />
           </div>
 
@@ -113,7 +113,7 @@ export function AssigneeSelector({ ticketId, assignedTo, onAssigned }: Props) {
             </button>
 
             {filtered.length === 0 && query && (
-              <div style={{ padding: '10px 12px', color: '#475569', fontSize: '12px', textAlign: 'center' }}>No members match "{query}"</div>
+              <div style={{ padding: '10px 12px', color: '#94a3b8', fontSize: '12px', textAlign: 'center' }}>No members match "{query}"</div>
             )}
 
             {filtered.map((m, i) => (
@@ -127,10 +127,10 @@ export function AssigneeSelector({ ticketId, assignedTo, onAssigned }: Props) {
                   {initials(m.user.name)}
                 </div>
                 <div style={{ flex: 1, textAlign: 'left', overflow: 'hidden' }}>
-                  <div style={{ color: '#e2e8f0', fontSize: '12px', fontWeight: 600 }}>{highlight(m.user.name, query)}</div>
-                  <div style={{ color: '#475569', fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{highlight(m.user.email, query)}</div>
+                  <div style={{ color: '#1e293b', fontSize: '12px', fontWeight: 600 }}>{highlight(m.user.name, query)}</div>
+                  <div style={{ color: '#94a3b8', fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{highlight(m.user.email, query)}</div>
                 </div>
-                <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '9999px', background: m.role === 'owner' ? '#3b82f622' : '#1e2533', color: m.role === 'owner' ? '#3b82f6' : '#64748b', flexShrink: 0 }}>
+                <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '9999px', background: m.role === 'owner' ? '#eff6ff' : '#f1f5f9', color: m.role === 'owner' ? '#2563eb' : '#64748b', flexShrink: 0 }}>
                   {m.role}
                 </span>
               </button>
@@ -145,6 +145,6 @@ export function AssigneeSelector({ ticketId, assignedTo, onAssigned }: Props) {
 function rowStyle(focused: boolean): React.CSSProperties {
   return {
     display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px',
-    border: 'none', background: focused ? '#1e2533' : 'transparent', cursor: 'pointer', textAlign: 'left',
+    border: 'none', background: focused ? '#f8fafc' : 'transparent', cursor: 'pointer', textAlign: 'left',
   };
 }

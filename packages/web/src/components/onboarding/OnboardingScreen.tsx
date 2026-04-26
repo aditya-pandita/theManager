@@ -1,276 +1,200 @@
 import { useRef, useState } from 'react';
 import { api } from '../../api/client';
 
-interface OnboardingScreenProps {
-  onComplete: () => void;
-}
+interface OnboardingScreenProps { onComplete: () => void; }
 
-const COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4'];
+const COLORS = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#db2777', '#0891b2'];
+
+const inp: React.CSSProperties = {
+  width: '100%', background: '#fff', border: '1.5px solid #e2e8f0',
+  borderRadius: '10px', padding: '11px 14px', color: '#1e293b',
+  fontSize: '14px', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
+};
+
+const lbl: React.CSSProperties = {
+  fontSize: '12px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px',
+};
+
+const StepDot = ({ n, current }: { n: number; current: number }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+    <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0, background: current > n ? '#2563eb' : current === n ? '#2563eb' : '#e2e8f0', color: current >= n ? '#fff' : '#94a3b8', transition: 'all 0.3s' }}>
+      {current > n
+        ? <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6L5 9L10 3"/></svg>
+        : n}
+    </div>
+    {n < 3 && <div style={{ width: 40, height: 2, background: current > n ? '#2563eb' : '#e2e8f0', transition: 'all 0.3s' }} />}
+  </div>
+);
 
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  // Step 1 state
-  const [projectName, setProjectName]   = useState('');
-  const [folderPath, setFolderPath]     = useState('');
-  const [description, setDescription]   = useState('');
-  const [color, setColor]               = useState('#3B82F6');
-  const [gitEnabled, setGitEnabled]     = useState(false);
-  const [gitRepoUrl, setGitRepoUrl]     = useState('');
+  // Step 1
+  const [projectName, setProjectName] = useState('');
+  const [folderPath, setFolderPath]   = useState('');
+  const [description, setDescription] = useState('');
+  const [color, setColor]             = useState('#2563eb');
+  const [gitEnabled, setGitEnabled]   = useState(false);
+  const [gitRepoUrl, setGitRepoUrl]   = useState('');
 
-  // Step 2 state
+  // Step 2
   const [documentText, setDocumentText] = useState('');
   const [fileName, setFileName]         = useState('');
   const [isDragging, setIsDragging]     = useState(false);
 
   // Shared
-  const [submitting, setSubmitting]     = useState(false);
-  const [error, setError]               = useState<string | null>(null);
+  const [submitting, setSubmitting]           = useState(false);
+  const [error, setError]                     = useState<string | null>(null);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
-  const [createdTickets, setCreatedTickets]     = useState<string[]>([]);
-
+  const [createdTickets, setCreatedTickets]   = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Step 1: create project ──────────────────────────────────────
   const handleCreateProject = async () => {
     if (!projectName.trim() || !folderPath.trim()) return;
-    setSubmitting(true);
-    setError(null);
+    setSubmitting(true); setError(null);
     try {
       const project = await api.post<any>('/api/bootstrap/project', {
-        name:       projectName.trim(),
-        description: description.trim() || undefined,
-        color,
-        folderPath: folderPath.trim(),
+        name: projectName.trim(), description: description.trim() || undefined,
+        color, folderPath: folderPath.trim(),
         gitRepoUrl: gitEnabled && gitRepoUrl.trim() ? gitRepoUrl.trim() : undefined,
       });
       setCreatedProjectId(project.id);
       setStep(2);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err) { setError((err as Error).message); }
+    finally { setSubmitting(false); }
   };
 
-  // ── Step 2: parse document ──────────────────────────────────────
   const handleParseDocument = async () => {
     if (!documentText.trim() || !createdProjectId) return;
-    setSubmitting(true);
-    setError(null);
+    setSubmitting(true); setError(null);
     try {
-      const result = await api.post<{ tickets: string[] }>('/api/bootstrap/document', {
-        projectId: createdProjectId,
-        document:  documentText.trim(),
-      });
+      const result = await api.post<{ tickets: string[] }>('/api/bootstrap/document', { projectId: createdProjectId, document: documentText.trim() });
       setCreatedTickets(result.tickets);
       setStep(3);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err) { setError((err as Error).message); }
+    finally { setSubmitting(false); }
   };
 
-  // ── File read (upload button + drag-drop) ───────────────────────
   const readFile = (file: File) => {
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      setDocumentText(ev.target?.result as string ?? '');
-      setFileName(file.name);
-    };
+    reader.onload = (ev) => { setDocumentText(ev.target?.result as string ?? ''); setFileName(file.name); };
     reader.readAsText(file);
-  };
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) readFile(file);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) readFile(file);
   };
 
   const canContinue = projectName.trim().length > 0 && folderPath.trim().length > 0;
 
-  // ── Shared styles ───────────────────────────────────────────────
-  const inp = (extra?: React.CSSProperties): React.CSSProperties => ({
-    width: '100%', background: '#0d1117', border: '1px solid #1e2330',
-    borderRadius: '10px', padding: '11px 14px', color: '#e2e8f0',
-    fontSize: '14px', boxSizing: 'border-box', outline: 'none',
-    fontFamily: 'inherit', ...extra,
-  });
-
-  const label = (text: string) => (
-    <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', display: 'block', marginBottom: '7px', textTransform: 'uppercase' }}>
-      {text}
-    </span>
-  );
+  const onFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.target.style.borderColor = '#2563eb'; };
+  const onBlur  = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.target.style.borderColor = '#e2e8f0'; };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080a0f', display: 'flex', fontFamily: "'DM Sans','Segoe UI',system-ui,sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter','DM Sans',system-ui,sans-serif", display: 'flex' }}>
 
-      {/* ── LEFT PANEL ── */}
-      <div style={{
-        width: '340px', flexShrink: 0, background: 'linear-gradient(160deg,#0f1623 0%,#080a0f 100%)',
-        borderRight: '1px solid #1a2030', padding: '56px 40px', display: 'flex', flexDirection: 'column',
-      }}>
+      {/* ── LEFT SIDEBAR ── */}
+      <div style={{ width: 280, flexShrink: 0, background: '#fff', borderRight: '1px solid #e2e8f0', padding: '40px 32px', display: 'flex', flexDirection: 'column' }}>
         {/* Logo */}
-        <div style={{ marginBottom: '48px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-            <div style={{ width: 32, height: 32, background: '#3b82f6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>⬡</div>
-            <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: '18px' }}>Decidr Code</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '48px' }}>
+          <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg,#6366f1,#2563eb)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: 800 }}>DC</div>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>Decidr Code</div>
+            <div style={{ fontSize: '11px', color: '#94a3b8' }}>AI Dev Platform</div>
           </div>
-          <p style={{ color: '#475569', fontSize: '13px', margin: 0 }}>AI-powered development platform</p>
         </div>
 
         {/* Steps */}
-        {[
-          { n: 1, title: 'Project Setup',       desc: 'Name, folder & git repo' },
-          { n: 2, title: 'Import Requirements', desc: 'Upload PRD or SRS document' },
-          { n: 3, title: 'Ready to Build',      desc: 'Tickets created, start coding' },
-        ].map(({ n, title, desc }) => {
-          const done    = step > n;
-          const active  = step === n;
-          return (
-            <div key={n} style={{ display: 'flex', gap: '14px', marginBottom: '28px', opacity: active ? 1 : done ? 0.9 : 0.4 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '12px', fontWeight: 700, flexShrink: 0,
-                  background: done ? '#22c55e' : active ? '#3b82f6' : '#1e2533',
-                  color: done || active ? '#fff' : '#475569',
-                  border: active ? '2px solid #3b82f622' : 'none',
-                }}>
-                  {done ? '✓' : n}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+          {[
+            { n: 1, title: 'Project Setup', desc: 'Name, folder & git repo' },
+            { n: 2, title: 'Requirements', desc: 'Upload PRD or spec doc' },
+            { n: 3, title: 'Ready to Build', desc: 'Tickets created on board' },
+          ].map(({ n, title, desc }) => (
+            <div key={n} style={{ display: 'flex', gap: '16px', marginBottom: n < 3 ? '0' : '0' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0, background: step > n ? '#2563eb' : step === n ? '#eff6ff' : '#f8fafc', color: step > n ? '#fff' : step === n ? '#2563eb' : '#94a3b8', border: step === n ? '2px solid #2563eb' : '2px solid transparent', transition: 'all 0.3s' }}>
+                  {step > n
+                    ? <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6L5 9L10 3"/></svg>
+                    : n}
                 </div>
-                {n < 3 && <div style={{ width: 1, flex: 1, minHeight: 20, background: done ? '#22c55e44' : '#1e2533', margin: '4px 0' }} />}
+                {n < 3 && <div style={{ width: 2, height: 36, background: step > n ? '#2563eb' : '#e2e8f0', margin: '4px 0', transition: 'all 0.3s' }} />}
               </div>
-              <div style={{ paddingTop: '4px' }}>
-                <div style={{ color: active ? '#e2e8f0' : done ? '#94a3b8' : '#475569', fontWeight: 600, fontSize: '13px' }}>{title}</div>
-                <div style={{ color: '#334155', fontSize: '12px', marginTop: '2px' }}>{desc}</div>
+              <div style={{ paddingTop: '4px', paddingBottom: n < 3 ? '28px' : '0' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: step === n ? '#1e293b' : step > n ? '#64748b' : '#94a3b8' }}>{title}</div>
+                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>{desc}</div>
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
 
-        {/* Feature list */}
-        <div style={{ marginTop: 'auto', borderTop: '1px solid #1a2030', paddingTop: '24px' }}>
-          {[
-            '🤖 7 specialized AI agents',
-            '🌿 Git branch auto-linking',
-            '📁 Real code written to disk',
-            '🧪 TDD with test generation',
-            '📋 Full audit trail & history',
-          ].map((f) => (
-            <div key={f} style={{ color: '#475569', fontSize: '12px', marginBottom: '8px' }}>{f}</div>
+        {/* Features */}
+        <div style={{ marginTop: 'auto', paddingTop: '32px', borderTop: '1px solid #f1f5f9' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '12px' }}>What you get</div>
+          {['7 specialized AI agents', 'Auto-git integration', 'Code saved to your folder', 'Full team collaboration'].map((f) => (
+            <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 5L4 7L8 3"/></svg>
+              </div>
+              <span style={{ fontSize: '12px', color: '#475569' }}>{f}</span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* ── RIGHT PANEL ── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
-        <div style={{ width: '100%', maxWidth: '520px' }}>
+      {/* ── MAIN CONTENT ── */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 40px' }}>
+        <div style={{ width: '100%', maxWidth: 520 }}>
 
           {/* ══ STEP 1 ══ */}
           {step === 1 && (
             <>
-              <h2 style={{ color: '#e2e8f0', fontSize: '22px', fontWeight: 700, margin: '0 0 6px' }}>Create your project</h2>
-              <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 32px' }}>Set up your project workspace. AI agents will generate real code into this folder.</p>
+              <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px', letterSpacing: '-0.02em' }}>Create your project</h1>
+              <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 32px', lineHeight: 1.6 }}>Set up your workspace. AI agents will generate real code directly into your project folder.</p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-                {/* Name */}
                 <div>
-                  {label('Project name *')}
-                  <input
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && canContinue && handleCreateProject()}
-                    placeholder="My Web App"
-                    autoFocus
-                    style={inp()}
-                  />
+                  <label style={lbl}>Project Name <span style={{ color: '#ef4444' }}>*</span></label>
+                  <input value={projectName} onChange={(e) => setProjectName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && canContinue && handleCreateProject()} placeholder="My Web App" style={inp} autoFocus onFocus={onFocus} onBlur={onBlur} />
                 </div>
 
-                {/* Folder */}
                 <div>
-                  {label('Project folder path *')}
-                  <input
-                    value={folderPath}
-                    onChange={(e) => setFolderPath(e.target.value)}
-                    placeholder={`/Users/${typeof navigator !== 'undefined' ? 'you' : 'you'}/Desktop/MyApp`}
-                    style={inp()}
-                  />
-                  <p style={{ color: '#334155', fontSize: '11px', margin: '5px 0 0' }}>
-                    Type the full path where you want the project created. AI agents will save code here.
-                  </p>
+                  <label style={lbl}>Project Folder Path <span style={{ color: '#ef4444' }}>*</span></label>
+                  <input value={folderPath} onChange={(e) => setFolderPath(e.target.value)} placeholder="/Users/you/Desktop/MyApp" style={inp} onFocus={onFocus} onBlur={onBlur} />
+                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '5px 0 0' }}>Generated code files will be saved here — open in VS Code, Cursor or any IDE.</p>
                 </div>
 
-                {/* Description */}
                 <div>
-                  {label('Description')}
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="What are you building? (e.g. A React dashboard with auth and real-time data)"
-                    rows={2}
-                    style={{ ...inp(), resize: 'vertical' }}
-                  />
+                  <label style={lbl}>Description <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span></label>
+                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What are you building? e.g. A React dashboard with auth and real-time data." rows={2} style={{ ...inp, resize: 'vertical' }} onFocus={onFocus} onBlur={onBlur} />
                 </div>
 
                 {/* Color */}
                 <div>
-                  {label('Project colour')}
+                  <label style={lbl}>Project Colour</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     {COLORS.map((c) => (
-                      <button key={c} onClick={() => setColor(c)} style={{
-                        width: 30, height: 30, borderRadius: '50%', background: c, border: 'none', cursor: 'pointer',
-                        outline: color === c ? `3px solid ${c}` : 'none', outlineOffset: '3px',
-                      }} />
+                      <button key={c} onClick={() => setColor(c)} style={{ width: 30, height: 30, borderRadius: '50%', background: c, border: color === c ? `3px solid ${c}` : '3px solid transparent', outline: color === c ? `2px solid #fff` : 'none', outlineOffset: '-4px', cursor: 'pointer', boxShadow: color === c ? `0 0 0 3px ${c}44` : 'none', transition: 'all 0.15s' }} />
                     ))}
                   </div>
                 </div>
 
                 {/* Git toggle */}
-                <div style={{ background: '#0d1117', border: '1px solid #1e2330', borderRadius: '10px', padding: '14px 16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setGitEnabled(!gitEnabled)}>
                     <div>
-                      <div style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600 }}>🌿 Link Git repository</div>
-                      <div style={{ color: '#334155', fontSize: '12px', marginTop: '2px' }}>Auto-link branches to tickets like Jira</div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>Link a Git Repository</div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Auto-link branches to tickets — works like Jira</div>
                     </div>
-                    <div
-                      onClick={() => setGitEnabled(!gitEnabled)}
-                      style={{ width: 40, height: 22, borderRadius: 9999, background: gitEnabled ? '#3b82f6' : '#1e2533', border: '1px solid #334155', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}
-                    >
-                      <div style={{ position: 'absolute', top: 3, left: gitEnabled ? 21 : 3, width: 14, height: 14, borderRadius: '50%', background: '#e2e8f0', transition: 'left 0.2s' }} />
+                    <div style={{ width: 42, height: 24, borderRadius: 9999, background: gitEnabled ? '#2563eb' : '#cbd5e1', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                      <div style={{ position: 'absolute', top: 3, left: gitEnabled ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                     </div>
                   </div>
                   {gitEnabled && (
-                    <input
-                      value={gitRepoUrl}
-                      onChange={(e) => setGitRepoUrl(e.target.value)}
-                      placeholder="https://github.com/your-org/your-repo"
-                      style={{ ...inp({ marginTop: '12px' }) }}
-                    />
+                    <input value={gitRepoUrl} onChange={(e) => setGitRepoUrl(e.target.value)} placeholder="https://github.com/your-org/your-repo" style={{ ...inp, marginTop: '12px', background: '#fff' }} onFocus={onFocus} onBlur={onBlur} />
                   )}
                 </div>
 
-                {error && <p style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>⚠ {error}</p>}
+                {error && <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '10px', padding: '11px 14px', color: '#dc2626', fontSize: '13px' }}>{error}</div>}
 
-                <button
-                  onClick={handleCreateProject}
-                  disabled={!canContinue || submitting}
-                  style={{
-                    background: canContinue && !submitting ? '#3b82f6' : '#1e2533',
-                    border: 'none', borderRadius: '10px', color: canContinue && !submitting ? '#fff' : '#475569',
-                    fontSize: '14px', fontWeight: 700, padding: '13px', cursor: canContinue && !submitting ? 'pointer' : 'default',
-                    transition: 'background 0.2s',
-                  }}
-                >
+                <button onClick={handleCreateProject} disabled={!canContinue || submitting} style={{ padding: '13px', borderRadius: '10px', border: 'none', fontFamily: 'inherit', fontSize: '14px', fontWeight: 700, cursor: canContinue && !submitting ? 'pointer' : 'default', background: canContinue && !submitting ? '#2563eb' : '#e2e8f0', color: canContinue && !submitting ? '#fff' : '#94a3b8', transition: 'all 0.15s' }}>
                   {submitting ? 'Creating project…' : 'Continue →'}
                 </button>
               </div>
@@ -280,97 +204,69 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           {/* ══ STEP 2 ══ */}
           {step === 2 && (
             <>
-              <h2 style={{ color: '#e2e8f0', fontSize: '22px', fontWeight: 700, margin: '0 0 6px' }}>Import requirements</h2>
-              <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 32px' }}>
-                Upload your PRD, SRS, or feature spec. Gemma 4 will read it and automatically create tickets on your board.
-              </p>
+              <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px', letterSpacing: '-0.02em' }}>Import requirements</h1>
+              <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 32px', lineHeight: 1.6 }}>Upload your PRD, SRS or feature spec. Gemma 4 will read it and create tickets on your board automatically.</p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-                {/* Drag-drop upload zone */}
+                {/* Drop zone */}
                 <div
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleDrop}
+                  onDrop={(e) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files?.[0]; if (f) readFile(f); }}
                   onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    border: `2px dashed ${isDragging ? '#3b82f6' : documentText ? '#22c55e' : '#1e2533'}`,
-                    borderRadius: '12px', padding: '36px 20px', textAlign: 'center', cursor: 'pointer',
-                    background: isDragging ? '#3b82f608' : documentText ? '#22c55e08' : '#0d1117',
-                    transition: 'all 0.2s',
-                  }}
+                  style={{ border: `2px dashed ${isDragging ? '#2563eb' : documentText ? '#059669' : '#d1d5db'}`, borderRadius: '12px', padding: '32px 24px', textAlign: 'center', cursor: 'pointer', background: isDragging ? '#eff6ff' : documentText ? '#f0fdf4' : '#fff', transition: 'all 0.2s' }}
                 >
-                  <div style={{ fontSize: '36px', marginBottom: '10px' }}>
-                    {documentText ? '📄' : '⬆️'}
-                  </div>
                   {documentText ? (
                     <>
-                      <div style={{ color: '#22c55e', fontWeight: 700, fontSize: '14px' }}>{fileName || 'Document loaded'}</div>
-                      <div style={{ color: '#64748b', fontSize: '12px', marginTop: '4px' }}>{documentText.length.toLocaleString()} characters · click to replace</div>
+                      <div style={{ width: 44, height: 44, background: '#dcfce7', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                        <svg width="22" height="22" viewBox="0 0 14 14" fill="none" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 1h8l2 2v10H3z"/><path d="M5 7l2 2 3-3"/></svg>
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>{fileName || 'Document loaded'}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{documentText.length.toLocaleString()} characters · click to replace</div>
                     </>
                   ) : (
                     <>
-                      <div style={{ color: '#94a3b8', fontWeight: 600, fontSize: '14px' }}>Drop your document here</div>
-                      <div style={{ color: '#475569', fontSize: '12px', marginTop: '4px' }}>or click to browse · .md, .txt, .pdf supported</div>
+                      <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                        <svg width="22" height="22" viewBox="0 0 14 14" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V2"/><path d="M4 6l3 3 3-3"/><path d="M2 11h10"/></svg>
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#374151' }}>Drop your document here</div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>or click to browse · .md, .txt, .pdf supported</div>
                     </>
                   )}
-                  <input ref={fileInputRef} type="file" accept=".md,.txt,.pdf,.doc,.docx" style={{ display: 'none' }} onChange={handleFileInput} />
+                  <input ref={fileInputRef} type="file" accept=".md,.txt,.pdf,.doc,.docx" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) readFile(f); }} />
                 </div>
 
-                {/* OR divider */}
+                {/* Divider */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ flex: 1, height: 1, background: '#1e2330' }} />
-                  <span style={{ color: '#334155', fontSize: '12px' }}>or paste directly</span>
-                  <div style={{ flex: 1, height: 1, background: '#1e2330' }} />
+                  <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                  <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>or paste directly</span>
+                  <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
                 </div>
 
-                {/* Paste area */}
+                {/* Paste textarea */}
                 <textarea
                   value={documentText}
                   onChange={(e) => { setDocumentText(e.target.value); setFileName(''); }}
-                  placeholder="Paste your requirements, user stories, feature list, or spec here...
-
-Example:
-- Build a user authentication system with email/password login
-- Add a dashboard showing real-time analytics
-- Create a REST API for managing products
-- Implement role-based access control"
-                  rows={8}
-                  style={{
-                    width: '100%', background: '#0d1117', border: '1px solid #1e2330', borderRadius: '10px',
-                    padding: '12px 14px', color: '#e2e8f0', fontSize: '13px', boxSizing: 'border-box',
-                    outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: '1.6',
-                  }}
+                  placeholder={`Paste your product requirements, user stories or feature list here…\n\nExample:\n- Build user authentication with email/password\n- Add dashboard with real-time analytics\n- Create REST API for product management`}
+                  rows={7}
+                  style={{ ...inp, resize: 'vertical', lineHeight: 1.6, fontSize: '13px' }}
+                  onFocus={onFocus} onBlur={onBlur}
                 />
 
-                {error && <p style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>⚠ {error}</p>}
+                {error && <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '10px', padding: '11px 14px', color: '#dc2626', fontSize: '13px' }}>{error}</div>}
 
-                {/* Action buttons */}
+                <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, textAlign: 'center' }}>Tickets are created on your board — you trigger AI pipeline manually per ticket.</p>
+
+                {/* Buttons */}
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    onClick={onComplete}
-                    style={{ background: 'transparent', border: '1px solid #1e2330', borderRadius: '10px', color: '#64748b', fontSize: '14px', fontWeight: 600, padding: '12px 20px', cursor: 'pointer', flex: 1 }}
-                  >
+                  <button onClick={onComplete} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     Start Empty
                   </button>
-                  <button
-                    onClick={handleParseDocument}
-                    disabled={!documentText.trim() || submitting}
-                    style={{
-                      background: documentText.trim() && !submitting ? '#3b82f6' : '#1e2533',
-                      border: 'none', borderRadius: '10px',
-                      color: documentText.trim() && !submitting ? '#fff' : '#475569',
-                      fontSize: '14px', fontWeight: 700, padding: '12px 20px', cursor: documentText.trim() && !submitting ? 'pointer' : 'default',
-                      flex: 2, transition: 'background 0.2s',
-                    }}
-                  >
-                    {submitting ? '⏳ Analyzing document…' : '✨ Create Tickets from Document'}
+                  <button onClick={handleParseDocument} disabled={!documentText.trim() || submitting} style={{ flex: 2, padding: '12px', borderRadius: '10px', border: 'none', fontFamily: 'inherit', fontSize: '13px', fontWeight: 700, cursor: documentText.trim() && !submitting ? 'pointer' : 'default', background: documentText.trim() && !submitting ? '#2563eb' : '#e2e8f0', color: documentText.trim() && !submitting ? '#fff' : '#94a3b8', transition: 'all 0.15s' }}>
+                    {submitting ? 'Analyzing document…' : 'Create Tickets from Document'}
                   </button>
                 </div>
-
-                <p style={{ color: '#334155', fontSize: '12px', textAlign: 'center', margin: 0 }}>
-                  Tickets are created on the board — you trigger the AI pipeline manually per ticket
-                </p>
               </div>
             </>
           )}
@@ -378,53 +274,54 @@ Example:
           {/* ══ STEP 3 ══ */}
           {step === 3 && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '64px', marginBottom: '16px' }}>🚀</div>
-              <h2 style={{ color: '#e2e8f0', fontSize: '22px', fontWeight: 700, margin: '0 0 10px' }}>
+              {/* Success icon */}
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#f0fdf4', border: '2px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                <svg width="34" height="34" viewBox="0 0 14 14" fill="none" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="7" cy="7" r="5"/><path d="M5 7l2 2 3-3"/>
+                </svg>
+              </div>
+
+              <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
                 {createdTickets.length > 0 ? `${createdTickets.length} tickets created!` : 'Project ready!'}
-              </h2>
-              <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 28px', lineHeight: '1.6' }}>
+              </h1>
+              <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 32px', lineHeight: 1.6, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto' }}>
                 {createdTickets.length > 0
-                  ? 'Your requirements have been converted into tickets. Open any ticket and click Run Pipeline — the AI agents will plan, code, test and review it automatically.'
-                  : 'Your project workspace is ready. Create tickets on the board and click Run Pipeline to let the AI agents build for you.'}
+                  ? 'Your requirements have been converted into tickets. Open any ticket and click Run Pipeline to start the AI agents.'
+                  : 'Your project workspace is ready. Create tickets on the board and click Run Pipeline to let the AI build for you.'}
               </p>
 
+              {/* Ticket list */}
               {createdTickets.length > 0 && (
-                <div style={{ background: '#0d1117', border: '1px solid #1e2330', borderRadius: '10px', padding: '16px', textAlign: 'left', marginBottom: '24px' }}>
-                  <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '10px', textTransform: 'uppercase' }}>
-                    Tickets on your board
-                  </div>
+                <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '16px', textAlign: 'left', marginBottom: '24px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '10px' }}>Tickets on your board</div>
                   {createdTickets.slice(0, 6).map((id) => (
-                    <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 0', borderBottom: '1px solid #1a2030' }}>
-                      <span style={{ color: '#3b82f6', fontSize: '11px', fontFamily: 'monospace', fontWeight: 600 }}>{id}</span>
-                      <span style={{ color: '#22c55e', fontSize: '10px', background: '#22c55e11', padding: '2px 8px', borderRadius: '9999px' }}>backlog</span>
+                    <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 0', borderBottom: '1px solid #f1f5f9' }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb', flexShrink: 0 }} />
+                      <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, color: '#2563eb' }}>{id}</span>
+                      <span style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 600, background: '#f0fdf4', color: '#16a34a', padding: '2px 8px', borderRadius: '9999px' }}>backlog</span>
                     </div>
                   ))}
-                  {createdTickets.length > 6 && (
-                    <div style={{ color: '#475569', fontSize: '12px', marginTop: '8px' }}>+{createdTickets.length - 6} more tickets</div>
-                  )}
+                  {createdTickets.length > 6 && <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '8px' }}>+{createdTickets.length - 6} more tickets</div>}
                 </div>
               )}
 
               {/* Next steps */}
-              <div style={{ background: '#0d1117', border: '1px solid #1e2330', borderRadius: '10px', padding: '16px', textAlign: 'left', marginBottom: '24px' }}>
-                <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '12px', textTransform: 'uppercase' }}>What to do next</div>
+              <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '20px', textAlign: 'left', marginBottom: '28px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '14px' }}>What to do next</div>
                 {[
-                  { icon: '1️⃣', text: 'Open a ticket from the board' },
-                  { icon: '2️⃣', text: 'Click Run Pipeline → agents plan, code & test it' },
-                  { icon: '3️⃣', text: 'Open your project folder in VS Code to see generated files' },
-                  { icon: '4️⃣', text: 'Review, run, and ship your code' },
-                ].map(({ icon, text }) => (
-                  <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px' }}>{icon}</span>
-                    <span style={{ color: '#94a3b8', fontSize: '13px' }}>{text}</span>
+                  'Open a ticket from the board',
+                  'Click Run Pipeline — agents plan, code & test it',
+                  'Open your project folder in VS Code to see generated files',
+                  'Review, run, and ship your code',
+                ].map((text, i) => (
+                  <div key={text} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#2563eb', flexShrink: 0 }}>{i + 1}</div>
+                    <span style={{ fontSize: '13px', color: '#374151', lineHeight: 1.5, paddingTop: '2px' }}>{text}</span>
                   </div>
                 ))}
               </div>
 
-              <button
-                onClick={onComplete}
-                style={{ background: '#3b82f6', border: 'none', borderRadius: '10px', color: '#fff', fontSize: '15px', fontWeight: 700, padding: '14px 32px', cursor: 'pointer', width: '100%' }}
-              >
+              <button onClick={onComplete} style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: '#2563eb', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Open Board →
               </button>
             </div>

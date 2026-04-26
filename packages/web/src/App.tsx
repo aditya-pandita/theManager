@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Header } from './components/layout/Header';
-import { NavTabs } from './components/layout/NavTabs';
-import { Toolbar } from './components/layout/Toolbar';
 import { Board } from './components/board/Board';
+import { ListView } from './components/board/ListView';
 import { TicketDetail } from './components/ticket/TicketDetail';
 import { CreateModal } from './components/create/CreateModal';
 import { HooksPanel } from './components/hooks/HooksPanel';
@@ -11,6 +9,9 @@ import { FlowView } from './components/flow/FlowView';
 import { OnboardingScreen } from './components/onboarding/OnboardingScreen';
 import { AuthScreen } from './components/auth/AuthScreen';
 import { TeamPanel } from './components/team/TeamPanel';
+import { Sidebar } from './components/layout/Sidebar';
+import { TopBar } from './components/layout/TopBar';
+import { BoardHeader } from './components/layout/BoardHeader';
 import { useTicketStore } from './stores/ticket-store';
 import { useUiStore } from './stores/ui-store';
 import { useHookStore } from './stores/hook-store';
@@ -28,14 +29,11 @@ export default function App() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
 
-  const refreshTickets = useCallback(() => {
-    fetchTickets(activeProjectId);
-  }, [activeProjectId, fetchTickets]);
+  const refreshTickets = useCallback(() => { fetchTickets(activeProjectId); }, [activeProjectId, fetchTickets]);
 
-  useEffect(() => {
-    fetchMe();
-  }, []);
+  useEffect(() => { fetchMe(); }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -45,80 +43,48 @@ export default function App() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (selectedTicketId) {
-      const t = tickets.find((t) => t.id === selectedTicketId) ?? null;
-      setSelectedTicket(t);
-    } else {
-      setSelectedTicket(null);
-    }
+    if (selectedTicketId) setSelectedTicket(tickets.find((t) => t.id === selectedTicketId) ?? null);
+    else setSelectedTicket(null);
   }, [selectedTicketId, tickets]);
 
-  const handleTicketClick = (ticket: Ticket) => setSelectedTicketId(ticket.id);
+  const handleTicketClick = (t: Ticket) => setSelectedTicketId(t.id);
   const handleClose = () => setSelectedTicketId(null);
+  const handleMove = (id: string, status: Status) => { moveTicket(id, status); setSelectedTicketId(null); };
+  const handleCreate = async (input: { title: string; description: string; priority: Priority; tags: string[] }) => { await addTicket(input); };
 
-  const handleMove = (id: string, status: Status) => {
-    moveTicket(id, status);
-    setSelectedTicketId(null);
-  };
-
-  const handleCreate = async (input: { title: string; description: string; priority: Priority; tags: string[] }) => {
-    await addTicket(input);
-  };
-
-  // Auth check in progress
   if (checking) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#080a0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#475569', fontSize: '14px' }}>Loading…</div>
-      </div>
-    );
+    return <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ color: '#94a3b8' }}>Loading…</div></div>;
   }
 
-  // Not logged in
   if (!isAuthenticated) return <AuthScreen />;
 
-  // Show onboarding when no projects exist OR user clicked New Project
   if ((hasInitialized && projects.length === 0) || showOnboarding) {
-    return (
-      <OnboardingScreen
-        onComplete={() => {
-          setShowOnboarding(false);
-          fetchProjects();
-          fetchTickets(null);
-        }}
-      />
-    );
+    return <OnboardingScreen onComplete={() => { setShowOnboarding(false); fetchProjects(); fetchTickets(null); }} />;
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0c10', color: '#e2e8f0', fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif" }}>
-      <Header tickets={tickets} onProjectChange={(id) => fetchTickets(id)} onNewProject={() => setShowOnboarding(true)} />
-      <NavTabs activeView={activeView} onViewChange={setActiveView} hookCount={hooks.length} />
-
-      {activeView === 'board' && (
-        <>
-          <Toolbar search={searchQuery} filterPriority={filterPriority} filterTag={filterTag} onSearch={setSearchQuery} onFilter={setFilterPriority} onFilterTag={setFilterTag} onNewTicket={() => setCreateModalOpen(true)} onImportDone={refreshTickets} />
-          <Board tickets={tickets} searchQuery={searchQuery} filterPriority={filterPriority} filterTag={filterTag} onTicketClick={handleTicketClick} />
-        </>
-      )}
-
-      {activeView === 'hooks' && <HooksPanel />}
-      {activeView === 'stats' && <StatsPanel />}
-      {activeView === 'flows' && <FlowView />}
-      {activeView === 'team'  && <TeamPanel />}
-
-      {isCreateModalOpen && (
-        <CreateModal onClose={() => setCreateModalOpen(false)} onCreate={handleCreate} />
-      )}
-
-      {selectedTicket && (
-        <TicketDetail
-          ticket={selectedTicket}
-          onClose={handleClose}
-          onMove={handleMove}
-          onRefresh={refreshTickets}
-        />
-      )}
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter','DM Sans',system-ui,sans-serif", color: '#1e293b' }}>
+      <Sidebar activeView={activeView} onViewChange={setActiveView} onNewProject={() => setShowOnboarding(true)} hookCount={hooks.length} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <TopBar tickets={tickets} onProjectChange={(id) => fetchTickets(id)} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {activeView === 'board' && (
+            <>
+              <BoardHeader search={searchQuery} filterPriority={filterPriority} filterTag={filterTag} viewMode={viewMode} onViewModeChange={setViewMode} onSearch={setSearchQuery} onFilter={setFilterPriority} onFilterTag={setFilterTag} onNewTicket={() => setCreateModalOpen(true)} onImportDone={refreshTickets} ticketCount={tickets.length} />
+              {viewMode === 'board'
+                ? <Board tickets={tickets} searchQuery={searchQuery} filterPriority={filterPriority} filterTag={filterTag} onTicketClick={handleTicketClick} />
+                : <ListView tickets={tickets.filter(t => { if (searchQuery && !t.title.toLowerCase().includes(searchQuery.toLowerCase())) return false; if (filterPriority && t.priority !== filterPriority) return false; if (filterTag && !t.tags.includes(filterTag)) return false; return true; })} onTicketClick={handleTicketClick} />
+              }
+            </>
+          )}
+          {activeView === 'hooks' && <div style={{ padding: '28px' }}><HooksPanel /></div>}
+          {activeView === 'stats' && <div style={{ padding: '28px' }}><StatsPanel /></div>}
+          {activeView === 'flows' && <div style={{ padding: '28px' }}><FlowView /></div>}
+          {activeView === 'team'  && <div style={{ padding: '28px' }}><TeamPanel /></div>}
+        </div>
+      </div>
+      {isCreateModalOpen && <CreateModal onClose={() => setCreateModalOpen(false)} onCreate={handleCreate} />}
+      {selectedTicket && <TicketDetail ticket={selectedTicket} onClose={handleClose} onMove={handleMove} onRefresh={refreshTickets} />}
     </div>
   );
 }

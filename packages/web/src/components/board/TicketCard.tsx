@@ -1,7 +1,26 @@
 import { PRIORITY } from '../../constants';
+import { useMemberStore } from '../../stores/member-store';
 import { Icons } from '../shared/Icons';
-import { Tag } from '../shared/Tag';
 import type { Ticket } from '../../types';
+
+const TAG_STYLES: Record<string, { bg: string; color: string }> = {
+  bug:      { bg: '#fef2f2', color: '#dc2626' },
+  feature:  { bg: '#eff6ff', color: '#2563eb' },
+  refactor: { bg: '#f5f3ff', color: '#7c3aed' },
+  docs:     { bg: '#fffbeb', color: '#d97706' },
+  test:     { bg: '#ecfeff', color: '#0891b2' },
+};
+
+const PRIORITY_BADGE: Record<string, { bg: string; color: string; label: string }> = {
+  critical: { bg: '#fef2f2', color: '#dc2626', label: 'Critical' },
+  high:     { bg: '#fff7ed', color: '#ea580c', label: 'High' },
+  medium:   { bg: '#fffbeb', color: '#d97706', label: 'Medium' },
+  low:      { bg: '#f8fafc', color: '#64748b', label: 'Low' },
+};
+
+function initials(name: string) {
+  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+}
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -10,33 +29,73 @@ interface TicketCardProps {
 
 export function TicketCard({ ticket, onClick }: TicketCardProps) {
   const pri = PRIORITY[ticket.priority];
+  const pb = PRIORITY_BADGE[ticket.priority];
+  const { members } = useMemberStore();
+  const assignedMember = (ticket as any).assignedTo
+    ? members.find((m) => m.user.id === (ticket as any).assignedTo)
+    : null;
+
   return (
     <div
       onClick={onClick}
       style={{
-        background: '#111318', border: '1px solid #1e2330', borderRadius: '10px', padding: '14px',
-        cursor: 'pointer', transition: 'all 0.2s ease', borderLeft: `3px solid ${pri.color}`,
+        background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px',
+        padding: '14px 16px', cursor: 'pointer', transition: 'all 0.15s',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = '#161a24'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = '#111318'; e.currentTarget.style.transform = 'none'; }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = '#c7d2fe'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#6B7280', letterSpacing: '0.05em' }}>{ticket.id}</span>
-        <span style={{ fontSize: '9px', fontWeight: 700, color: pri.color, background: pri.bg, padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.05em' }}>
-          {pri.label}
-        </span>
+      {/* Priority badge + ID row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: '9px', fontFamily: 'monospace', color: '#94a3b8', letterSpacing: '0.05em' }}>{ticket.id}</span>
+        {pb && (
+          <span style={{ fontSize: '10px', fontWeight: 600, background: pb.bg, color: pb.color, padding: '2px 8px', borderRadius: '20px' }}>
+            {pb.label}
+          </span>
+        )}
       </div>
-      <div style={{ color: '#e2e8f0', fontSize: '13px', fontWeight: 600, marginBottom: '10px', lineHeight: '1.4' }}>{ticket.title}</div>
-      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
-        {ticket.tags.map((t) => <Tag key={t} label={t} />)}
+
+      {/* Title */}
+      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b', lineHeight: 1.45, marginBottom: '10px' }}>
+        {ticket.title}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          {ticket.diff && <span style={{ color: '#3B82F6', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px' }}><Icons.Code /> diff</span>}
-          {ticket.reasoning && <span style={{ color: '#c084fc', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px' }}><Icons.Brain /> why</span>}
-          {(ticket.comments?.length ?? 0) > 0 && <span style={{ color: '#A855F7', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px' }}><Icons.Chat /> {ticket.comments!.length}</span>}
+
+      {/* Tags */}
+      {ticket.tags.length > 0 && (
+        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
+          {ticket.tags.map((t) => {
+            const ts = TAG_STYLES[t] ?? { bg: '#f1f5f9', color: '#64748b' };
+            return (
+              <span key={t} style={{ fontSize: '10px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px', background: ts.bg, color: ts.color }}>
+                {t}
+              </span>
+            );
+          })}
         </div>
-        <span style={{ fontSize: '10px', color: '#4B5563' }}>{ticket.changelog?.length ?? 0} events</span>
+      )}
+
+      {/* Footer — reasoning badge + assignee */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {ticket.reasoning && (
+            <span style={{ fontSize: '10px', background: '#f5f3ff', color: '#7c3aed', padding: '2px 7px', borderRadius: '20px', fontWeight: 500 }}>
+              ✦ AI reasoning
+            </span>
+          )}
+          {(ticket.comments?.length ?? 0) > 0 && (
+            <span style={{ fontSize: '10px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <Icons.Comment /> {ticket.comments!.length}
+            </span>
+          )}
+        </div>
+        {assignedMember ? (
+          <div style={{ width: 24, height: 24, borderRadius: '50%', background: assignedMember.user.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '9px', fontWeight: 700 }} title={assignedMember.user.name}>
+            {initials(assignedMember.user.name)}
+          </div>
+        ) : (
+          <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '11px' }}>?</div>
+        )}
       </div>
     </div>
   );

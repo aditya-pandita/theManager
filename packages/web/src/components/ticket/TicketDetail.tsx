@@ -17,14 +17,7 @@ import type { Ticket, Status } from '../../types';
 
 type TabId = 'story' | 'diff' | 'reasoning' | 'comments' | 'pipeline' | 'tests' | 'chat' | 'activity';
 
-interface TicketDetailProps {
-  ticket: Ticket;
-  onClose: () => void;
-  onMove: (id: string, status: Status) => void;
-  onRefresh: () => void;
-}
-
-export function TicketDetail({ ticket, onClose, onMove, onRefresh }: TicketDetailProps) {
+export function TicketDetail({ ticket, onClose, onMove, onRefresh }: { ticket: Ticket; onClose: () => void; onMove: (id: string, status: Status) => void; onRefresh: () => void }) {
   const [tab, setTab] = useState<TabId>('story');
   const { user } = useAuthStore();
 
@@ -33,40 +26,24 @@ export function TicketDetail({ ticket, onClose, onMove, onRefresh }: TicketDetai
     onRefresh();
   };
 
-  const handleProcessed = () => {
-    onRefresh();
-    setTab('reasoning');
-  };
-
-  const handleMove = (id: string, status: Status) => {
-    onMove(id, status);
-    onClose();
-  };
-
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)' }}
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: '#13161d', border: '1px solid #1e2330', borderRadius: '16px', width: '820px', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}
+        style={{ background: '#fff', borderRadius: '16px', width: '860px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0' }}
       >
-        <TicketHeader ticket={ticket} onClose={onClose} onMove={handleMove} onRefresh={onRefresh} />
+        <TicketHeader ticket={ticket} onClose={onClose} onMove={(id, s) => { onMove(id, s); onClose(); }} onRefresh={onRefresh} />
         <TabBar activeTab={tab} onTabChange={(t) => setTab(t as TabId)} commentCount={ticket.comments?.length ?? 0} />
-
-        <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+        <div style={{ flex: 1, overflow: 'auto', padding: '24px', background: '#f8fafc', borderRadius: '0 0 16px 16px' }}>
           {tab === 'story'    && <UserStoryTab ticketId={ticket.id} initial={ticket.userStory} />}
           {tab === 'pipeline' && <PipelinePanel ticketId={ticket.id} />}
           {tab === 'chat'     && <ChatPanel ticketId={ticket.id} />}
           {tab === 'tests'    && <TestResultsPanel ticketId={ticket.id} />}
           {tab === 'activity' && <ActivityFeed ticketId={ticket.id} />}
-          {tab === 'diff' && (
-            <div>
-              <DiffView diff={ticket.diff} />
-              <ProcessButton ticketId={ticket.id} onProcessed={handleProcessed} />
-            </div>
-          )}
+          {tab === 'diff' && <div><DiffView diff={ticket.diff} /><ProcessButton ticketId={ticket.id} onProcessed={() => { onRefresh(); setTab('reasoning'); }} /></div>}
           {tab === 'reasoning' && <ReasoningTab reasoning={ticket.reasoning ?? null} />}
           {tab === 'comments' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

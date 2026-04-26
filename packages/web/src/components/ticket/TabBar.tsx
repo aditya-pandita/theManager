@@ -1,49 +1,30 @@
 import { Icons } from '../shared/Icons';
-import type { ReactElement } from 'react';
 
 type TabId = 'story' | 'diff' | 'reasoning' | 'comments' | 'pipeline' | 'tests' | 'chat' | 'activity';
 
-interface Tab {
-  id: TabId;
-  icon: ReactElement;
-  label: string;
-}
+const TABS: Array<{ id: TabId; label: string; icon: React.ReactNode }> = [
+  { id: 'story',     label: 'Story',    icon: <Icons.User /> },
+  { id: 'pipeline',  label: 'Pipeline', icon: <Icons.Pipeline /> },
+  { id: 'chat',      label: 'Chat',     icon: <Icons.Chat /> },
+  { id: 'reasoning', label: 'Reasoning',icon: <Icons.Brain /> },
+  { id: 'diff',      label: 'Diff',     icon: <Icons.Diff /> },
+  { id: 'tests',     label: 'Tests',    icon: <Icons.Test /> },
+  { id: 'activity',  label: 'Activity', icon: <Icons.Activity /> },
+  { id: 'comments',  label: 'Comments', icon: <Icons.Comment /> },
+];
 
-interface TabBarProps {
-  activeTab: TabId;
-  onTabChange: (tab: TabId) => void;
-  commentCount: number;
-}
-
-export function TabBar({ activeTab, onTabChange, commentCount }: TabBarProps) {
-  const tabs: Tab[] = [
-    { id: 'story',     icon: <Icons.User />,    label: 'Story' },
-    { id: 'pipeline',  icon: <Icons.Brain />,   label: 'Pipeline' },
-    { id: 'chat',      icon: <Icons.Chat />,    label: 'Chat' },
-    { id: 'reasoning', icon: <Icons.Brain />,   label: 'Reasoning' },
-    { id: 'diff',      icon: <Icons.Code />,    label: 'Diff' },
-    { id: 'tests',     icon: <Icons.Code />,    label: 'Tests' },
-    { id: 'activity',  icon: <Icons.History />, label: 'Activity' },
-    { id: 'comments',  icon: <Icons.Chat />,    label: `Comments (${commentCount})` },
-  ];
-
+export function TabBar({ activeTab, onTabChange, commentCount }: { activeTab: TabId; onTabChange: (t: TabId) => void; commentCount: number }) {
   return (
-    <div className="tab-bar" style={{ display: 'flex', borderBottom: '1px solid #1e2330', padding: '0 24px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          onClick={() => onTabChange(t.id)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 16px', border: 'none',
-            background: 'transparent', color: activeTab === t.id ? '#e2e8f0' : '#6B7280',
-            cursor: 'pointer', fontSize: '12px', fontWeight: 600,
-            borderBottom: activeTab === t.id ? '2px solid #3B82F6' : '2px solid transparent',
-            transition: 'all 0.15s',
-          }}
-        >
-          {t.icon} {t.label}
-        </button>
-      ))}
+    <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 24px', background: '#fff', overflowX: 'auto', scrollbarWidth: 'none', flexShrink: 0 }}>
+      {TABS.map((t) => {
+        const active = activeTab === t.id;
+        const label = t.id === 'comments' ? `Comments (${commentCount})` : t.label;
+        return (
+          <button key={t.id} onClick={() => onTabChange(t.id)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '11px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '12px', fontWeight: active ? 600 : 500, whiteSpace: 'nowrap', color: active ? '#2563eb' : '#64748b', borderBottom: active ? '2px solid #2563eb' : '2px solid transparent', transition: 'all 0.15s' }}>
+            {t.icon} {label}
+          </button>
+        );
+      })}
     </div>
   );
 }

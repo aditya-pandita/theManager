@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMemberStore } from '../../stores/member-store';
 import { useAuthStore } from '../../stores/auth-store';
 import { api } from '../../api/client';
+import { Icons } from '../shared/Icons';
 
 function initials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
@@ -78,17 +79,17 @@ export function TeamPanel() {
             disabled={!inviteEmail.trim() || inviting}
             style={{ background: inviteEmail.trim() && !inviting ? '#3b82f6' : '#1e2533', border: 'none', borderRadius: '8px', color: inviteEmail.trim() && !inviting ? '#fff' : '#475569', fontSize: '13px', fontWeight: 600, padding: '9px 18px', cursor: inviteEmail.trim() && !inviting ? 'pointer' : 'default' }}
           >
-            {inviting ? 'Sending…' : 'Send Invite'}
+            {inviting ? 'Sending…' : <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Icons.Send /> Send Invite</span>}
           </button>
         </div>
 
-        {error && <p style={{ color: '#ef4444', fontSize: '12px', margin: '10px 0 0' }}>⚠ {error}</p>}
+        {error && <p style={{ color: '#ef4444', fontSize: '12px', margin: '10px 0 0' }}>{error}</p>}
 
         {inviteUrl && (
           <div style={{ marginTop: '12px', background: '#0d1117', border: '1px solid #22c55e33', borderRadius: '8px', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ color: '#22c55e', fontSize: '12px', flex: 1, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inviteUrl}</span>
             <button onClick={copyLink} style={{ background: copied ? '#22c55e22' : '#1e2533', border: '1px solid #334155', borderRadius: '6px', color: copied ? '#22c55e' : '#94a3b8', fontSize: '11px', padding: '4px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              {copied ? '✓ Copied!' : 'Copy link'}
+              {copied ? 'Copied!' : 'Copy link'}
             </button>
           </div>
         )}

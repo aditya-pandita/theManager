@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Modal } from '../shared/Modal';
 import { PriorityPicker } from './PriorityPicker';
 import { TagPicker } from './TagPicker';
 import { CodeAttach } from './CodeAttach';
@@ -11,8 +10,16 @@ interface CreateModalProps {
   onCreate: (input: { title: string; description: string; priority: Priority; tags: string[]; diff?: { filePath: string; beforeCode: string; afterCode: string } }) => Promise<void>;
 }
 
-const labelStyle: React.CSSProperties = { color: '#94a3b8', fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', marginBottom: '6px', display: 'block' };
-const inputStyle: React.CSSProperties = { width: '100%', background: '#0c0e14', border: '1px solid #1e2330', borderRadius: '8px', padding: '10px 14px', color: '#e2e8f0', fontSize: '13px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+const inp: React.CSSProperties = {
+  width: '100%', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px',
+  padding: '10px 14px', color: '#1e293b', fontSize: '13px', outline: 'none',
+  fontFamily: 'inherit', boxSizing: 'border-box',
+};
+
+const lbl: React.CSSProperties = {
+  color: '#64748b', fontSize: '11px', fontWeight: 600, letterSpacing: '0.06em',
+  marginBottom: '6px', display: 'block', textTransform: 'uppercase',
+};
 
 export function CreateModal({ onClose, onCreate }: CreateModalProps) {
   const [title, setTitle] = useState('');
@@ -27,56 +34,56 @@ export function CreateModal({ onClose, onCreate }: CreateModalProps) {
     if (!title.trim() || submitting) return;
     setSubmitting(true);
     try {
-      await onCreate({
-        title: title.trim(),
-        description: desc.trim(),
-        priority,
-        tags,
-        diff: filePath && code ? { filePath, beforeCode: code, afterCode: '' } : undefined,
-      });
+      await onCreate({ title: title.trim(), description: desc.trim(), priority, tags, diff: filePath && code ? { filePath, beforeCode: code, afterCode: '' } : undefined });
       onClose();
-    } finally {
-      setSubmitting(false);
-    }
+    } finally { setSubmitting(false); }
   };
 
   return (
-    <Modal onClose={onClose} width={540}>
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid #1e2330', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: '#e2e8f0', fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#3B82F6' }}><Icons.Plus /></span> New Ticket
-        </span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', padding: '4px' }}><Icons.X /></button>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)' }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', width: 560, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.12)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+
+        {/* Header */}
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: '#2563eb', display: 'flex' }}><Icons.Plus /></span> New Ticket
+          </span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', padding: '2px' }}><Icons.X /></button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px', overflowY: 'auto' }}>
+          <div>
+            <label style={lbl}>Title</label>
+            <input style={inp} placeholder="What needs to be done?" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && handleCreate()} />
+          </div>
+          <div>
+            <label style={lbl}>Description</label>
+            <textarea style={{ ...inp, minHeight: '80px', resize: 'vertical' }} placeholder="Describe the task or instructions for the AI agents..." value={desc} onChange={(e) => setDesc(e.target.value)} />
+          </div>
+          <div>
+            <label style={lbl}>Priority</label>
+            <PriorityPicker value={priority} onChange={setPriority} />
+          </div>
+          <div>
+            <label style={lbl}>Tags</label>
+            <TagPicker selected={tags} onChange={setTags} />
+          </div>
+          <CodeAttach filePath={filePath} code={code} onFilePathChange={setFilePath} onCodeChange={setCode} />
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: '10px', background: '#fff' }}>
+          <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>Cancel</button>
+          <button
+            onClick={handleCreate}
+            disabled={!title.trim() || submitting}
+            style={{ padding: '9px 24px', borderRadius: '8px', border: 'none', background: title.trim() && !submitting ? '#2563eb' : '#e2e8f0', color: title.trim() && !submitting ? '#fff' : '#94a3b8', cursor: title.trim() ? 'pointer' : 'default', fontSize: '13px', fontWeight: 600 }}
+          >
+            {submitting ? 'Creating…' : 'Create Ticket'}
+          </button>
+        </div>
       </div>
-      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={labelStyle}>TITLE</label>
-          <input style={inputStyle} placeholder="What needs to be done?" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
-        </div>
-        <div>
-          <label style={labelStyle}>DESCRIPTION</label>
-          <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} placeholder="Describe the task or instructions for Claude..." value={desc} onChange={(e) => setDesc(e.target.value)} />
-        </div>
-        <div>
-          <label style={labelStyle}>PRIORITY</label>
-          <PriorityPicker value={priority} onChange={setPriority} />
-        </div>
-        <div>
-          <label style={labelStyle}>TAGS</label>
-          <TagPicker selected={tags} onChange={setTags} />
-        </div>
-        <CodeAttach filePath={filePath} code={code} onFilePathChange={setFilePath} onCodeChange={setCode} />
-      </div>
-      <div style={{ padding: '16px 24px', borderTop: '1px solid #1e2330', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-        <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #1e2330', background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
-        <button
-          onClick={handleCreate}
-          disabled={!title.trim() || submitting}
-          style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: title.trim() ? 'pointer' : 'default', fontSize: '13px', fontWeight: 600, background: title.trim() ? 'linear-gradient(135deg, #3B82F6, #2563EB)' : '#1e2330', color: title.trim() ? '#fff' : '#4B5563', transition: 'all 0.2s' }}
-        >
-          {submitting ? 'Creating...' : 'Create Ticket'}
-        </button>
-      </div>
-    </Modal>
+    </div>
   );
 }

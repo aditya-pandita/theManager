@@ -19,8 +19,8 @@ export function Board({ tickets, searchQuery, filterPriority, filterTag, onTicke
   });
 
   return (
-    <div style={{ display: 'flex', gap: '1px', padding: '20px 28px', height: 'calc(100vh - 155px)', overflow: 'auto' }}>
-      {COLUMNS.map((col) => (
+    <div style={{ display: 'flex', height: 'calc(100vh - 165px)', overflow: 'hidden', background: '#f8fafc' }}>
+      {COLUMNS.map((col, i) => (
         <Column
           key={col.id}
           id={col.id}
@@ -28,6 +28,7 @@ export function Board({ tickets, searchQuery, filterPriority, filterTag, onTicke
           color={col.color}
           tickets={filtered.filter((t) => t.status === col.id)}
           onTicketClick={onTicketClick}
+          isLast={i === COLUMNS.length - 1}
         />
       ))}
     </div>
