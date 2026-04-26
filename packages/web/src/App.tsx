@@ -58,7 +58,11 @@ export default function App() {
   const handleTicketClick = (t: Ticket) => setSelectedTicketId(t.id);
   const handleClose = () => setSelectedTicketId(null);
   const handleMove = (id: string, status: Status) => { moveTicket(id, status); setSelectedTicketId(null); };
-  const handleCreate = async (input: { title: string; description: string; priority: Priority; tags: string[] }) => { await addTicket(input); };
+  const handleCreate = async (input: { title: string; description: string; priority: Priority; tags: string[]; projectId: string | null }) => {
+    await addTicket({ ...input, projectId: input.projectId ?? undefined });
+    // Refetch the board if the new ticket landed in the currently-active project so it shows immediately.
+    if (input.projectId === activeProjectId) fetchTickets(activeProjectId);
+  };
 
   if (checking) {
     return <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ color: '#94a3b8' }}>Loading…</div></div>;

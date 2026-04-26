@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePipelineStore } from '../../stores/pipeline-store';
 import { AgentCard } from './AgentCard';
 import { PipelineControls } from '../controls/PipelineControls';
@@ -12,14 +12,24 @@ const STATE_STYLE: Record<string, { bg: string; color: string; dot: string }> = 
   awaiting_approval:  { bg: '#f5f3ff', color: '#7c3aed', dot: '#a855f7' },
 };
 
-export function PipelinePanel({ ticketId }: { ticketId: string }) {
+export function PipelinePanel({ ticketId, onPipelineComplete }: { ticketId: string; onPipelineComplete?: () => void }) {
   const { pipelineState, currentAgent, agentRuns, fetchAgentRuns, connectSSE, disconnectSSE } = usePipelineStore();
+  const prevStateRef = useRef<string>(pipelineState);
 
   useEffect(() => {
     fetchAgentRuns(ticketId);
     connectSSE(ticketId);
     return () => disconnectSSE();
   }, [ticketId]);
+
+  // Fire onPipelineComplete on the running → completed transition (not on mount when state already === 'completed').
+  useEffect(() => {
+    const prev = prevStateRef.current;
+    if (prev !== 'completed' && pipelineState === 'completed') {
+      onPipelineComplete?.();
+    }
+    prevStateRef.current = pipelineState;
+  }, [pipelineState, onPipelineComplete]);
 
   const ss = STATE_STYLE[pipelineState] ?? STATE_STYLE.idle;
 

@@ -36,10 +36,10 @@ export function TicketDetail({ ticket, onClose, onMove, onRefresh }: { ticket: T
         style={{ background: '#fff', borderRadius: '16px', width: '860px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0' }}
       >
         <TicketHeader ticket={ticket} onClose={onClose} onMove={(id, s) => { onMove(id, s); onClose(); }} onRefresh={onRefresh} />
-        <TabBar activeTab={tab} onTabChange={(t) => setTab(t as TabId)} commentCount={ticket.comments?.length ?? 0} />
+        <TabBar activeTab={tab} onTabChange={(t) => { const next = t as TabId; if (next === 'reasoning' && tab !== 'reasoning') onRefresh(); setTab(next); }} commentCount={ticket.comments?.length ?? 0} />
         <div style={{ flex: 1, overflow: 'auto', padding: '24px', background: '#f8fafc', borderRadius: '0 0 16px 16px' }}>
           {tab === 'story'    && <UserStoryTab ticketId={ticket.id} initial={ticket.userStory} />}
-          {tab === 'pipeline' && <PipelinePanel ticketId={ticket.id} />}
+          {tab === 'pipeline' && <PipelinePanel ticketId={ticket.id} onPipelineComplete={() => { onRefresh(); setTab('reasoning'); }} />}
           {tab === 'chat'     && <ChatPanel ticketId={ticket.id} />}
           {tab === 'tests'    && <TestResultsPanel ticketId={ticket.id} />}
           {tab === 'activity' && <ActivityFeed ticketId={ticket.id} />}

@@ -3,11 +3,12 @@ import { PriorityPicker } from './PriorityPicker';
 import { TagPicker } from './TagPicker';
 import { CodeAttach } from './CodeAttach';
 import { Icons } from '../shared/Icons';
+import { useProjectStore } from '../../stores/project-store';
 import type { Priority } from '../../types';
 
 interface CreateModalProps {
   onClose: () => void;
-  onCreate: (input: { title: string; description: string; priority: Priority; tags: string[]; diff?: { filePath: string; beforeCode: string; afterCode: string } }) => Promise<void>;
+  onCreate: (input: { title: string; description: string; priority: Priority; tags: string[]; projectId: string | null; diff?: { filePath: string; beforeCode: string; afterCode: string } }) => Promise<void>;
 }
 
 const inp: React.CSSProperties = {
@@ -22,6 +23,9 @@ const lbl: React.CSSProperties = {
 };
 
 export function CreateModal({ onClose, onCreate }: CreateModalProps) {
+  const projects = useProjectStore((s) => s.projects);
+  const activeProjectId = useProjectStore((s) => s.activeProjectId);
+  const [projectId, setProjectId] = useState<string | null>(activeProjectId ?? projects[0]?.id ?? null);
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
@@ -30,11 +34,13 @@ export function CreateModal({ onClose, onCreate }: CreateModalProps) {
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const selectedProject = projects.find((p) => p.id === projectId);
+
   const handleCreate = async () => {
     if (!title.trim() || submitting) return;
     setSubmitting(true);
     try {
-      await onCreate({ title: title.trim(), description: desc.trim(), priority, tags, diff: filePath && code ? { filePath, beforeCode: code, afterCode: '' } : undefined });
+      await onCreate({ title: title.trim(), description: desc.trim(), priority, tags, projectId, diff: filePath && code ? { filePath, beforeCode: code, afterCode: '' } : undefined });
       onClose();
     } finally { setSubmitting(false); }
   };
@@ -53,6 +59,24 @@ export function CreateModal({ onClose, onCreate }: CreateModalProps) {
 
         {/* Body */}
         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px', overflowY: 'auto' }}>
+          <div>
+            <label style={lbl}>Project</label>
+            <div style={{ position: 'relative' }}>
+              {selectedProject && (
+                <span aria-hidden style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 8, height: 8, borderRadius: '50%', background: selectedProject.color, pointerEvents: 'none' }} />
+              )}
+              <select
+                value={projectId ?? ''}
+                onChange={(e) => setProjectId(e.target.value || null)}
+                style={{ ...inp, paddingLeft: selectedProject ? 30 : 14, appearance: 'none', cursor: 'pointer' }}
+              >
+                {projects.length === 0 && <option value="">(no projects)</option>}
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div>
             <label style={lbl}>Title</label>
             <input style={inp} placeholder="What needs to be done?" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && handleCreate()} />
