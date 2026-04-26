@@ -110,6 +110,12 @@ router.post('/', async (req, res) => {
       return sendError(res, 'Send CSV as text/plain body or JSON { csv: "..." }', 400);
     }
 
+    // Read the active project from query (?projectId=PROJ-XXX) so the imported
+    // tickets land inside the user's currently-selected project. Falls back to
+    // null (orphan tickets, visible only under "All Projects") if not provided.
+    const projectIdRaw = (req.query.projectId as string | undefined)?.trim();
+    const projectId = projectIdRaw && projectIdRaw.length > 0 ? projectIdRaw : null;
+
     const rows = parseCSV(csvText);
     if (rows.length === 0) {
       return sendError(res, 'No data rows found in CSV', 400);
@@ -143,6 +149,7 @@ router.post('/', async (req, res) => {
           priority,
           status,
           tags,
+          projectId,
         });
         imported++;
       } catch (err: unknown) {
@@ -151,7 +158,7 @@ router.post('/', async (req, res) => {
       }
     }
 
-    sendJSON(res, { imported, skipped, total: rows.length, errors }, 201);
+    sendJSON(res, { imported, skipped, total: rows.length, errors, projectId }, 201);
   } catch (err: unknown) {
     sendError(res, (err as Error).message);
   }

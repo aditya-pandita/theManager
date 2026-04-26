@@ -28,10 +28,12 @@ export const api = {
 
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
 
-  importCSV: <T>(csvText: string) =>
-    request<T>('/api/import/csv', {
+  importCSV: <T>(csvText: string, projectId?: string | null) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return request<T>(`/api/import/csv${qs}`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: csvText,
-    }),
+    });
+  },
 };

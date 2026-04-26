@@ -3,6 +3,7 @@ import { Icons } from '../shared/Icons';
 import { PRIORITY } from '../../constants';
 import { api } from '../../api/client';
 import { ExportModal } from '../export/ExportModal';
+import { useProjectStore } from '../../stores/project-store';
 import type { Priority } from '../../types';
 
 interface ImportResult { imported: number; skipped: number; total: number; errors: string[] }
@@ -21,6 +22,9 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  // Send the user's currently-selected project so imported rows land inside it
+  // instead of as orphan tickets visible only under "All Projects".
+  const activeProjectId = useProjectStore((s) => s.activeProjectId);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -29,7 +33,7 @@ export function Toolbar({ search, filterPriority, onSearch, onFilter, onNewTicke
     setResult(null);
     try {
       const text = await file.text();
-      const res = await api.importCSV<ImportResult>(text);
+      const res = await api.importCSV<ImportResult>(text, activeProjectId);
       setResult(res);
       onImportDone?.();
     } catch (err) {
