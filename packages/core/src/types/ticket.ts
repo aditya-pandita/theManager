@@ -4,6 +4,7 @@ export type Tag = 'bug' | 'feature' | 'refactor' | 'perf' | 'docs' | 'test' | 's
 
 export interface Project {
   id: string;
+  workspaceId: string | null;
   name: string;
   description: string | null;
   color: string;
@@ -15,6 +16,7 @@ export interface Project {
 
 export interface NewProject {
   id?: string;
+  workspaceId?: string;
   name: string;
   description?: string;
   color?: string;
@@ -62,6 +64,8 @@ export interface ChangelogEntry {
 export interface Ticket {
   id: string;
   projectId: string | null;
+  workspaceId: string | null;
+  assignedTo: number | null;
   title: string;
   description: string | null;
   status: Status;
@@ -70,6 +74,7 @@ export interface Ticket {
   createdAt: Date;
   updatedAt: Date;
   project?: Project | null;
+  assignedUser?: import('./auth').User | null;
   diff?: Diff | null;
   reasoning?: import('./reasoning').Reasoning | null;
   userStory?: UserStory | null;
@@ -82,6 +87,8 @@ export interface Ticket {
 export interface NewTicket {
   title: string;
   projectId?: string;
+  workspaceId?: string;
+  assignedTo?: number;
   description?: string;
   status?: Status;
   priority?: Priority;

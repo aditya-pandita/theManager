@@ -1,15 +1,17 @@
 import { COLUMNS, PRIORITY } from '../../constants';
 import { Icons } from '../shared/Icons';
 import { Tag } from '../shared/Tag';
+import { AssigneeSelector } from './AssigneeSelector';
 import type { Ticket, Status } from '../../types';
 
 interface TicketHeaderProps {
   ticket: Ticket;
   onClose: () => void;
   onMove: (id: string, status: Status) => void;
+  onRefresh: () => void;
 }
 
-export function TicketHeader({ ticket, onClose, onMove }: TicketHeaderProps) {
+export function TicketHeader({ ticket, onClose, onMove, onRefresh }: TicketHeaderProps) {
   const colIdx = COLUMNS.findIndex((c) => c.id === ticket.status);
   const currentCol = COLUMNS[colIdx];
   const pri = PRIORITY[ticket.priority];
@@ -29,6 +31,7 @@ export function TicketHeader({ ticket, onClose, onMove }: TicketHeaderProps) {
           {currentCol?.label}
         </span>
         {(ticket.tags ?? []).map((t) => <Tag key={t} label={t} />)}
+        <AssigneeSelector ticketId={ticket.id} assignedTo={(ticket as any).assignedTo ?? null} onAssigned={onRefresh} />
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
           {colIdx > 0 && (
             <button onClick={() => onMove(ticket.id, COLUMNS[colIdx - 1].id)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', border: '1px solid #1e2330', background: '#0c0e14', color: '#94a3b8', cursor: 'pointer', fontSize: '10px' }}>

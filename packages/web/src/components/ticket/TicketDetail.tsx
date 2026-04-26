@@ -5,19 +5,17 @@ import { DiffView } from './DiffView';
 import { ProcessButton } from './ProcessButton';
 import { CommentList } from './CommentList';
 import { CommentInput } from './CommentInput';
-import { HistoryTimeline } from './HistoryTimeline';
-import { MediaDrop } from './MediaDrop';
 import { UserStoryTab } from './UserStoryTab';
-import { GitTab } from './GitTab';
 import { ReasoningTab } from '../reasoning/ReasoningTab';
 import { PipelinePanel } from '../agents/PipelinePanel';
 import { TestResultsPanel } from '../testing/TestResultsPanel';
 import { ChatPanel } from '../chat/ChatPanel';
 import { ActivityFeed } from '../activity/ActivityFeed';
 import { api } from '../../api/client';
+import { useAuthStore } from '../../stores/auth-store';
 import type { Ticket, Status } from '../../types';
 
-type TabId = 'story' | 'diff' | 'reasoning' | 'git' | 'comments' | 'history' | 'media' | 'pipeline' | 'tests' | 'chat' | 'activity';
+type TabId = 'story' | 'diff' | 'reasoning' | 'comments' | 'pipeline' | 'tests' | 'chat' | 'activity';
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -28,9 +26,10 @@ interface TicketDetailProps {
 
 export function TicketDetail({ ticket, onClose, onMove, onRefresh }: TicketDetailProps) {
   const [tab, setTab] = useState<TabId>('story');
+  const { user } = useAuthStore();
 
   const handleSendComment = async (text: string) => {
-    await api.post(`/api/tickets/${ticket.id}/comments`, { author: 'Aditya', text });
+    await api.post(`/api/tickets/${ticket.id}/comments`, { author: user?.name ?? 'User', text });
     onRefresh();
   };
 
@@ -51,10 +50,10 @@ export function TicketDetail({ ticket, onClose, onMove, onRefresh }: TicketDetai
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: '#13161d', border: '1px solid #1e2330', borderRadius: '16px', width: '780px', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}
+        style={{ background: '#13161d', border: '1px solid #1e2330', borderRadius: '16px', width: '820px', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}
       >
-        <TicketHeader ticket={ticket} onClose={onClose} onMove={handleMove} />
-        <TabBar activeTab={tab} onTabChange={(t) => setTab(t as TabId)} commentCount={ticket.comments?.length ?? 0} gitCount={(ticket.gitBranches?.length ?? 0) + (ticket.gitCommits?.length ?? 0)} />
+        <TicketHeader ticket={ticket} onClose={onClose} onMove={handleMove} onRefresh={onRefresh} />
+        <TabBar activeTab={tab} onTabChange={(t) => setTab(t as TabId)} commentCount={ticket.comments?.length ?? 0} />
 
         <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
           {tab === 'story'    && <UserStoryTab ticketId={ticket.id} initial={ticket.userStory} />}
@@ -69,15 +68,12 @@ export function TicketDetail({ ticket, onClose, onMove, onRefresh }: TicketDetai
             </div>
           )}
           {tab === 'reasoning' && <ReasoningTab reasoning={ticket.reasoning ?? null} />}
-          {tab === 'git' && <GitTab ticketId={ticket.id} branches={ticket.gitBranches ?? []} commits={ticket.gitCommits ?? []} onRefresh={onRefresh} />}
           {tab === 'comments' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <CommentList comments={ticket.comments ?? []} />
               <CommentInput onSend={handleSendComment} />
             </div>
           )}
-          {tab === 'history' && <HistoryTimeline changelog={ticket.changelog ?? []} />}
-          {tab === 'media' && <MediaDrop />}
         </div>
       </div>
     </div>

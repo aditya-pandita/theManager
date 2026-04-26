@@ -12,34 +12,103 @@ import {
 import { sql } from 'drizzle-orm';
 import { relations } from 'drizzle-orm';
 
+// ─── AUTH TABLES ─────────────────────────────────────────────
+
+export const users = pgTable(
+  'users',
+  {
+    id:           serial('id').primaryKey(),
+    email:        text('email').notNull().unique(),
+    name:         text('name').notNull(),
+    passwordHash: text('password_hash').notNull(),
+    avatarColor:  text('avatar_color').notNull().default('#3B82F6'),
+    createdAt:    timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    emailIdx: index('idx_users_email').on(t.email),
+  })
+);
+
+export const workspaces = pgTable(
+  'workspaces',
+  {
+    id:        text('id').primaryKey(),
+    name:      text('name').notNull(),
+    slug:      text('slug').notNull().unique(),
+    ownerId:   integer('owner_id').notNull().references(() => users.id),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    slugIdx: index('idx_workspaces_slug').on(t.slug),
+  })
+);
+
+export const workspaceMembers = pgTable(
+  'workspace_members',
+  {
+    id:          serial('id').primaryKey(),
+    workspaceId: text('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+    userId:      integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    role:        text('role').notNull().default('member'),
+    joinedAt:    timestamp('joined_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    wsUserIdx: index('idx_ws_members_ws_user').on(t.workspaceId, t.userId),
+  })
+);
+
+export const invites = pgTable(
+  'invites',
+  {
+    id:          serial('id').primaryKey(),
+    workspaceId: text('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+    email:       text('email').notNull(),
+    role:        text('role').notNull().default('member'),
+    token:       text('token').notNull().unique(),
+    invitedBy:   integer('invited_by').notNull().references(() => users.id),
+    expiresAt:   timestamp('expires_at').notNull(),
+    usedAt:      timestamp('used_at'),
+    createdAt:   timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenIdx: index('idx_invites_token').on(t.token),
+    emailIdx: index('idx_invites_email').on(t.email),
+  })
+);
+
+// ─── PROJECTS ─────────────────────────────────────────────────
+
 export const projects = pgTable('projects', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
+  id:          text('id').primaryKey(),
+  workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
+  name:        text('name').notNull(),
   description: text('description'),
-  color: text('color').notNull().default('#3B82F6'),
-  folderPath: text('folder_path'),
-  gitRepoUrl: text('git_repo_url'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  color:       text('color').notNull().default('#3B82F6'),
+  folderPath:  text('folder_path'),
+  gitRepoUrl:  text('git_repo_url'),
+  createdAt:   timestamp('created_at').notNull().defaultNow(),
+  updatedAt:   timestamp('updated_at').notNull().defaultNow(),
 });
 
 export const tickets = pgTable(
   'tickets',
   {
     id: text('id').primaryKey(),
-    projectId: text('project_id').references(() => projects.id, { onDelete: 'set null' }),
-    title: text('title').notNull(),
-    description: text('description'),
-    status: text('status').notNull().default('backlog'),
-    priority: text('priority').notNull().default('medium'),
-    tags: text('tags').array().notNull().default(sql`ARRAY[]::text[]`),
-    pipelineState: text('pipeline_state').notNull().default('idle'),
-    currentAgent: text('current_agent'),
-    isPaused: boolean('is_paused').notNull().default(false),
-    isLocked: boolean('is_locked').notNull().default(false),
+    projectId:   text('project_id').references(() => projects.id, { onDelete: 'set null' }),
+    workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
+    assignedTo:  integer('assigned_to').references(() => users.id, { onDelete: 'set null' }),
+    title:          text('title').notNull(),
+    description:    text('description'),
+    status:         text('status').notNull().default('backlog'),
+    priority:       text('priority').notNull().default('medium'),
+    tags:           text('tags').array().notNull().default(sql`ARRAY[]::text[]`),
+    pipelineState:  text('pipeline_state').notNull().default('idle'),
+    currentAgent:   text('current_agent'),
+    isPaused:       boolean('is_paused').notNull().default(false),
+    isLocked:       boolean('is_locked').notNull().default(false),
     pipelineConfig: jsonb('pipeline_config'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt:      timestamp('created_at').notNull().defaultNow(),
+    updatedAt:      timestamp('updated_at').notNull().defaultNow(),
   },
   (t) => ({
     statusIdx: index('idx_tickets_status').on(t.status),
@@ -195,13 +264,44 @@ export const gitCommits = pgTable(
   })
 );
 
-// Relations
-export const projectsRelations = relations(projects, ({ many }) => ({
-  tickets: many(tickets),
+// ─── AUTH RELATIONS ───────────────────────────────────────────
+
+export const usersRelations = relations(users, ({ many }) => ({
+  workspaceMemberships: many(workspaceMembers),
+  ownedWorkspaces:      many(workspaces),
+  sentInvites:          many(invites),
+  assignedTickets:      many(tickets),
+}));
+
+export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
+  owner:    one(users, { fields: [workspaces.ownerId], references: [users.id] }),
+  members:  many(workspaceMembers),
+  invites:  many(invites),
+  projects: many(projects),
+  tickets:  many(tickets),
+}));
+
+export const workspaceMembersRelations = relations(workspaceMembers, ({ one }) => ({
+  workspace: one(workspaces, { fields: [workspaceMembers.workspaceId], references: [workspaces.id] }),
+  user:      one(users,      { fields: [workspaceMembers.userId],      references: [users.id] }),
+}));
+
+export const invitesRelations = relations(invites, ({ one }) => ({
+  workspace:  one(workspaces, { fields: [invites.workspaceId], references: [workspaces.id] }),
+  invitedBy:  one(users,      { fields: [invites.invitedBy],   references: [users.id] }),
+}));
+
+// ─── EXISTING RELATIONS ───────────────────────────────────────
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [projects.workspaceId], references: [workspaces.id] }),
+  tickets:   many(tickets),
 }));
 
 export const ticketsRelations = relations(tickets, ({ one, many }) => ({
-  project: one(projects, { fields: [tickets.projectId], references: [projects.id] }),
+  project:      one(projects,   { fields: [tickets.projectId],  references: [projects.id] }),
+  workspace:    one(workspaces, { fields: [tickets.workspaceId], references: [workspaces.id] }),
+  assignedUser: one(users,      { fields: [tickets.assignedTo],  references: [users.id] }),
   diff: one(diffs, { fields: [tickets.id], references: [diffs.ticketId] }),
   reasoning: one(reasoning, { fields: [tickets.id], references: [reasoning.ticketId] }),
   userStory: one(userStories, { fields: [tickets.id], references: [userStories.ticketId] }),
@@ -263,7 +363,7 @@ export const agentRuns = pgTable(
     reasoning:    jsonb('reasoning'),
     errorMessage: text('error_message'),
     retryCount:   integer('retry_count').notNull().default(0),
-    model:        text('model').notNull().default('gemini-2.0-flash'),
+    model:        text('model').notNull().default('gemma-3-27b-it'),
     tokensInput:  integer('tokens_input'),
     tokensOutput: integer('tokens_output'),
     costUsd:      real('cost_usd'),

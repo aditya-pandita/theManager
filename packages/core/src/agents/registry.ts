@@ -8,10 +8,9 @@ import { TesterAgent } from './tester-agent';
 import { DebuggerAgent } from './debugger-agent';
 import { DocsAgent } from './docs-agent';
 
-// Gemma 4 26B MoE — open-weight, Apache 2.0, served via the same Gemini API.
-// Has thinking tokens (counted against maxOutputTokens) but does NOT support
-// thinkingConfig, so token budgets are sized to leave room for both thinking and output.
-export const GEMMA_MODEL = 'gemini-2.5-flash';
+// Gemma 4 27B — free tier, served via Google Generative AI API (same GEMINI_KEY).
+// Does NOT support thinkingConfig — base-agent detects 'gemma' prefix and skips it.
+export const GEMMA_MODEL = 'gemma-3-27b-it';
 
 const DEFAULT_CONFIGS: Record<AgentName, AgentConfig> = {
   planner: {

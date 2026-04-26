@@ -6,6 +6,7 @@ export * from './types/config';
 export * from './types/agent';
 export * from './types/testing';
 export * from './types/activity';
+export * from './types/auth';
 
 // DB
 export { db } from './db/connection';
@@ -42,6 +43,10 @@ export { testService } from './services/test-service';
 export { chatService } from './services/chat-service';
 export { activityService } from './activity/activity-service';
 export { projectBootstrapService } from './services/project-bootstrap-service';
+export { authService } from './services/auth-service';
+export { userRepo } from './repositories/user-repo';
+export { workspaceRepo } from './repositories/workspace-repo';
+export { inviteRepo } from './repositories/invite-repo';
 
 // Agents
 export { agentRegistry, GEMMA_MODEL } from './agents/registry';

@@ -6,13 +6,15 @@ interface BoardProps {
   tickets: Ticket[];
   searchQuery: string;
   filterPriority: Priority | null;
+  filterTag?: string | null;
   onTicketClick: (ticket: Ticket) => void;
 }
 
-export function Board({ tickets, searchQuery, filterPriority, onTicketClick }: BoardProps) {
+export function Board({ tickets, searchQuery, filterPriority, filterTag, onTicketClick }: BoardProps) {
   const filtered = tickets.filter((t) => {
     if (searchQuery && !t.title.toLowerCase().includes(searchQuery.toLowerCase()) && !t.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (filterPriority && t.priority !== filterPriority) return false;
+    if (filterTag && !t.tags.includes(filterTag)) return false;
     return true;
   });
 

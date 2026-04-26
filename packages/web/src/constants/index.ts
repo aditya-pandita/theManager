@@ -15,7 +15,7 @@ export const PRIORITY: Record<Priority, { label: string; color: string; bg: stri
   low:      { label: 'LOW',      color: '#6B7280', bg: '#1f2937' },
 };
 
-export const TAGS = ['bug', 'feature', 'refactor', 'perf', 'docs', 'test', 'style', 'infra'] as const;
+export const TAGS = ['bug', 'feature', 'refactor', 'docs', 'test'] as const;
 
 export const NODE_STYLES: Record<string, { color: string; bg: string; border: string; icon: string | null }> = {
   problem:       { color: '#F59E0B', bg: '#422006', border: '#F59E0B30', icon: '?' },

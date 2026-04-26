@@ -13,6 +13,7 @@ import userStoriesRouter from './routes/user-stories';
 import gitRouter from './routes/git';
 import ticketGitRouter from './routes/ticket-git';
 import exportRouter from './routes/export';
+import authRouter from './routes/auth';
 import agentsRouter from './routes/agents';
 import pipelineRouter from './routes/pipeline';
 import testsRouter from './routes/tests';
@@ -39,6 +40,10 @@ app.use('/api/tickets/:id/user-story', userStoriesRouter);
 app.use('/api/git', gitRouter);
 app.use('/api/tickets/:id/git', ticketGitRouter);
 app.use('/api/export', exportRouter);
+
+// Auth routes (no auth required on these)
+app.use('/api/auth', authRouter);
+app.use('/api/workspace', authRouter);
 
 // Phase 2 routes
 app.use('/api/agents',    agentsRouter);

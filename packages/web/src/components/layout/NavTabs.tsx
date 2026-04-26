@@ -1,6 +1,6 @@
 import { Icons } from '../shared/Icons';
 
-type View = 'board' | 'hooks' | 'stats' | 'flows';
+type View = 'board' | 'hooks' | 'stats' | 'flows' | 'team';
 
 interface NavTabsProps {
   activeView: View;
@@ -9,10 +9,11 @@ interface NavTabsProps {
 }
 
 const TABS: Array<{ id: View; label: string; icon: JSX.Element }> = [
-  { id: 'board',  label: 'Board',    icon: <Icons.Code /> },
-  { id: 'flows',  label: 'Flows',    icon: <Icons.Flow /> },
+  { id: 'board',  label: 'Board',     icon: <Icons.Code /> },
+  { id: 'team',   label: 'Team',      icon: <Icons.User /> },
+  { id: 'flows',  label: 'Flows',     icon: <Icons.Flow /> },
   { id: 'hooks',  label: 'Hooks Log', icon: <Icons.Zap /> },
-  { id: 'stats',  label: 'Stats',    icon: <Icons.BarChart /> },
+  { id: 'stats',  label: 'Stats',     icon: <Icons.BarChart /> },
 ];
 
 export function NavTabs({ activeView, onViewChange, hookCount = 0 }: NavTabsProps) {
