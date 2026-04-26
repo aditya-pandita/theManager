@@ -7,14 +7,15 @@ export class CoderAgent extends BaseAgent {
   buildPrompt(input: AgentInput): string {
     const { ticket, contextStore, userFeedback } = input;
     return JSON.stringify({
-      task: 'Implement the ticket. Generate code files as diffs. Follow the architecture design.',
+      task: 'Implement complete working code files at their real project paths (relative to project root, not inside decidr/).',
       ticket: { id: ticket.id, title: ticket.title, description: ticket.description, priority: ticket.priority, tags: ticket.tags },
       plan: contextStore['plan'] ?? null,
       design: contextStore['design'] ?? null,
+      projectStructure: contextStore['projectStructure'] ?? null,
       testResults: contextStore['test_results'] ?? null,
       review: contextStore['review'] ?? null,
       userFeedback: userFeedback ?? null,
-      instructions: 'Return JSON: { "summary": string, "confidence": number, "reasoning": { "id":"r1","label":"...","type":"decision","children":[] }, "data": { "files": [{ "path": string, "content": string }], "commitMessage": string } }',
+      instructions: 'Return JSON with files array where each path is relative to project root (e.g. src/components/Login.tsx). Full complete content only. See system prompt for schema.',
     });
   }
 
@@ -25,7 +26,7 @@ export class CoderAgent extends BaseAgent {
       ticketId,
       reasoning: parsed.reasoning ?? { id: 'r1', label: 'Implementation', type: 'decision' },
       confidence: parsed.confidence ?? 0.8,
-      data: parsed.data ?? {},
+      data: parsed.data ?? (parsed.files ? { files: parsed.files, commitMessage: parsed.commitMessage } : {}),
       tokensInput: 0,
       tokensOutput: 0,
       durationMs: 0,

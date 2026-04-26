@@ -18,6 +18,7 @@ export const projects = pgTable('projects', {
   description: text('description'),
   color: text('color').notNull().default('#3B82F6'),
   folderPath: text('folder_path'),
+  gitRepoUrl: text('git_repo_url'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

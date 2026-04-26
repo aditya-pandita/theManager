@@ -8,6 +8,7 @@ import { CreateModal } from './components/create/CreateModal';
 import { HooksPanel } from './components/hooks/HooksPanel';
 import { StatsPanel } from './components/stats/StatsPanel';
 import { FlowView } from './components/flow/FlowView';
+import { OnboardingScreen } from './components/onboarding/OnboardingScreen';
 import { useTicketStore } from './stores/ticket-store';
 import { useUiStore } from './stores/ui-store';
 import { useHookStore } from './stores/hook-store';
@@ -18,16 +19,17 @@ export default function App() {
   const { tickets, fetchTickets, addTicket, moveTicket } = useTicketStore();
   const { activeView, searchQuery, filterPriority, selectedTicketId, isCreateModalOpen, setActiveView, setSearchQuery, setFilterPriority, setSelectedTicketId, setCreateModalOpen } = useUiStore();
   const { hooks } = useHookStore();
-  const { activeProjectId, fetchProjects } = useProjectStore();
+  const { projects, activeProjectId, fetchProjects } = useProjectStore();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const refreshTickets = useCallback(() => {
     fetchTickets(activeProjectId);
   }, [activeProjectId, fetchTickets]);
 
   useEffect(() => {
-    fetchProjects();
+    fetchProjects().then(() => setHasInitialized(true));
     fetchTickets(activeProjectId);
   }, []);
 
@@ -51,6 +53,18 @@ export default function App() {
   const handleCreate = async (input: { title: string; description: string; priority: Priority; tags: string[] }) => {
     await addTicket(input);
   };
+
+  // Show onboarding when no projects exist (after first fetch resolves)
+  if (hasInitialized && projects.length === 0) {
+    return (
+      <OnboardingScreen
+        onComplete={() => {
+          fetchProjects();
+          fetchTickets(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0c10', color: '#e2e8f0', fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif" }}>

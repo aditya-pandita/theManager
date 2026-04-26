@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide scrollbar on tab bar but keep it scrollable */
+.tab-bar::-webkit-scrollbar { display: none; }
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

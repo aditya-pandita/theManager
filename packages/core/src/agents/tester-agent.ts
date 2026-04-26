@@ -24,7 +24,7 @@ export class TesterAgent extends BaseAgent {
       ticketId,
       reasoning: parsed.reasoning ?? { id: 'r1', label: 'Testing', type: 'decision' },
       confidence: parsed.confidence ?? 0.8,
-      data: parsed.data ?? {},
+      data: parsed.data ?? (parsed.testFiles ? { testFiles: parsed.testFiles, results: parsed.results, bugsCreated: parsed.bugsCreated } : {}),
       tokensInput: 0,
       tokensOutput: 0,
       durationMs: 0,

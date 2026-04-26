@@ -24,7 +24,7 @@ export class ReviewerAgent extends BaseAgent {
       ticketId,
       reasoning: parsed.reasoning ?? { id: 'r1', label: 'Review', type: 'decision' },
       confidence: parsed.confidence ?? 0.8,
-      data: parsed.data ?? {},
+      data: parsed.data ?? (parsed.overallScore != null ? { overallScore: parsed.overallScore, fileReviews: parsed.fileReviews, inlineComments: parsed.inlineComments } : {}),
       tokensInput: 0,
       tokensOutput: 0,
       durationMs: 0,

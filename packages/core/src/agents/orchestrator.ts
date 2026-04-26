@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { agentRegistry } from './registry';
 import { contextStore } from './context-store';
 import { failureHandler } from './failure-handler';
@@ -5,10 +7,108 @@ import { activityService } from '../activity/activity-service';
 import { agentRunRepo } from '../repositories/agent-run-repo';
 import { checkpointRepo } from '../repositories/checkpoint-repo';
 import { ticketRepo } from '../repositories/ticket-repo';
+import { projectRepo } from '../repositories/project-repo';
 import { reasoningRepo } from '../repositories/reasoning-repo';
 import type { AgentName, PipelineConfig, TicketType } from '../types/agent';
 import type { Ticket } from '../types/ticket';
 import type { TreeNode } from '../types/reasoning';
+
+// Write agent-generated files directly to the project folder on disk.
+// Code/test/scaffold files go at the project root (e.g. folderPath/src/components/Login.tsx).
+// Planning artifacts (design notes, task lists) go into decidr/planning/.
+function writeAgentOutputInline(folderPath: string, ticketId: string, agentName: string, data: Record<string, unknown>): void {
+  const decidrDir = path.join(folderPath, 'decidr');
+
+  if (agentName === 'planner') {
+    // Write root config/scaffold files designed by planner (package.json, tsconfig, etc.)
+    const struct = data.projectStructure as { directories?: string[]; rootFiles?: Array<{ path: string; content: string }> } | undefined;
+    if (struct) {
+      // Create directories
+      for (const dir of (struct.directories ?? [])) {
+        fs.mkdirSync(path.join(folderPath, dir), { recursive: true });
+      }
+      // Write root files (package.json, tsconfig.json, README.md, .gitignore, etc.)
+      for (const f of (struct.rootFiles ?? [])) {
+        if (!f?.path || f.content == null) continue;
+        const dest = path.join(folderPath, f.path);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, f.content, 'utf-8');
+      }
+    }
+    // Also save task plan to decidr/planning/ for reference
+    const planDir = path.join(decidrDir, 'planning');
+    fs.mkdirSync(planDir, { recursive: true });
+    fs.writeFileSync(path.join(planDir, `${ticketId}-tasks.json`), JSON.stringify(data.tasks ?? data, null, 2), 'utf-8');
+
+  } else if (agentName === 'architect') {
+    // Write scaffold/stub files at real project paths
+    const scaffoldFiles = data.scaffoldFiles as Array<{ path: string; content: string }> | undefined;
+    if (Array.isArray(scaffoldFiles)) {
+      for (const f of scaffoldFiles) {
+        if (!f?.path || f.content == null) continue;
+        const dest = path.join(folderPath, f.path);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, f.content, 'utf-8');
+      }
+    }
+    // Save design note to decidr/planning/ for reference
+    const planDir = path.join(decidrDir, 'planning');
+    fs.mkdirSync(planDir, { recursive: true });
+    const note = (data.designNote as string) ?? JSON.stringify(data, null, 2);
+    fs.writeFileSync(path.join(planDir, `${ticketId}-design.md`), note, 'utf-8');
+
+  } else if (agentName === 'coder') {
+    // Write generated code files directly at project root paths
+    const files = data.files as Array<{ path: string; content: string }> | undefined;
+    if (Array.isArray(files)) {
+      for (const f of files) {
+        if (!f?.path || f.content == null) continue;
+        // Strip any accidental decidr/ prefix agents might add
+        const cleanPath = f.path.replace(/^decidr\/(?:code\/)?(?:[^/]+\/)?/, '');
+        const dest = path.join(folderPath, cleanPath);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, f.content, 'utf-8');
+      }
+    }
+
+  } else if (agentName === 'tester') {
+    // Write test files at real project paths
+    const files = data.testFiles as Array<{ path: string; content: string }> | undefined;
+    if (Array.isArray(files)) {
+      for (const f of files) {
+        if (!f?.path || f.content == null) continue;
+        const cleanPath = f.path.replace(/^decidr\/(?:tests\/)?(?:[^/]+\/)?/, '');
+        const dest = path.join(folderPath, cleanPath);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, f.content, 'utf-8');
+      }
+    }
+
+  } else if (agentName === 'docs') {
+    const entry = data.changelogEntry as string | undefined;
+    if (entry) {
+      // Changelog goes into decidr/ since it's metadata, not source code
+      const docsDir = path.join(decidrDir, 'docs');
+      fs.mkdirSync(docsDir, { recursive: true });
+      fs.writeFileSync(path.join(docsDir, `${ticketId}-changelog.md`), entry, 'utf-8');
+    }
+    // Also write any updated doc files (README etc.) at project root
+    const updatedFiles = data.updatedFiles as Array<{ path: string; content: string }> | undefined;
+    if (Array.isArray(updatedFiles)) {
+      for (const f of updatedFiles) {
+        if (!f?.path || f.content == null) continue;
+        const dest = path.join(folderPath, f.path);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, f.content, 'utf-8');
+      }
+    }
+
+  } else if (agentName === 'reviewer') {
+    const planDir = path.join(decidrDir, 'planning');
+    fs.mkdirSync(planDir, { recursive: true });
+    fs.writeFileSync(path.join(planDir, `${ticketId}-review.json`), JSON.stringify(data, null, 2), 'utf-8');
+  }
+}
 
 // Build a consolidated decision tree from completed agent runs.
 // Each agent becomes a top-level branch under the ticket's problem node;
@@ -181,6 +281,20 @@ export const orchestrator = {
 
         await agentRunRepo.complete(run.id, output.data as object, output.tokensInput, output.tokensOutput, output.durationMs);
         await contextStore.set(ticket.id, agentName === 'coder' ? 'code_files' : agentName, output.data, agentName);
+        // Store projectStructure separately so all downstream agents can access it
+        if (agentName === 'planner' && (output.data as any)?.projectStructure) {
+          await contextStore.set(ticket.id, 'projectStructure', (output.data as any).projectStructure, 'planner');
+        }
+
+        // Write agent outputs to project folder on disk so devs can open in IDE
+        try {
+          const proj = ticket.projectId ? await projectRepo.findById(ticket.projectId) : null;
+          if (proj?.folderPath) {
+            writeAgentOutputInline(proj.folderPath, ticket.id, agentName, output.data as Record<string, unknown>);
+          }
+        } catch (e) {
+          console.warn('[orchestrator] disk write skipped:', (e as Error).message);
+        }
 
         activityService.log({
           ticketId: ticket.id, actorType: 'agent', actorName: agentName,

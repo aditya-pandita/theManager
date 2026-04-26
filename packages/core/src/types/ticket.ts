@@ -8,6 +8,7 @@ export interface Project {
   description: string | null;
   color: string;
   folderPath: string | null;
+  gitRepoUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,6 +19,7 @@ export interface NewProject {
   description?: string;
   color?: string;
   folderPath?: string;
+  gitRepoUrl?: string;
 }
 
 export interface UserStory {

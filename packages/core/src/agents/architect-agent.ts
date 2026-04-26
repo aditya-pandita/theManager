@@ -7,11 +7,12 @@ export class ArchitectAgent extends BaseAgent {
   buildPrompt(input: AgentInput): string {
     const { ticket, contextStore, userFeedback } = input;
     return JSON.stringify({
-      task: 'Propose the file structure, design patterns, and affected components for this ticket.',
+      task: 'Design the technical solution and generate scaffold files at their real project paths.',
       ticket: { id: ticket.id, title: ticket.title, description: ticket.description, priority: ticket.priority, tags: ticket.tags },
       plan: contextStore['plan'] ?? null,
+      projectStructure: contextStore['projectStructure'] ?? null,
       userFeedback: userFeedback ?? null,
-      instructions: 'Return JSON: { "summary": string, "confidence": number, "reasoning": { "id":"r1","label":"...","type":"decision","children":[] }, "data": { "designNote": string, "fileStructure": string[], "affectedComponents": string[], "patterns": string[] } }',
+      instructions: 'Return JSON with scaffoldFiles (path relative to project root, real content). See system prompt for exact schema.',
     });
   }
 
@@ -22,7 +23,7 @@ export class ArchitectAgent extends BaseAgent {
       ticketId,
       reasoning: parsed.reasoning ?? { id: 'r1', label: 'Architecture', type: 'decision' },
       confidence: parsed.confidence ?? 0.8,
-      data: parsed.data ?? {},
+      data: parsed.data ?? (parsed.scaffoldFiles || parsed.designNote ? { scaffoldFiles: parsed.scaffoldFiles, designNote: parsed.designNote, affectedComponents: parsed.affectedComponents, patterns: parsed.patterns } : {}),
       tokensInput: 0,
       tokensOutput: 0,
       durationMs: 0,

@@ -23,7 +23,7 @@ export class DebuggerAgent extends BaseAgent {
       ticketId,
       reasoning: parsed.reasoning ?? { id: 'r1', label: 'Debug', type: 'root_cause' },
       confidence: parsed.confidence ?? 0.8,
-      data: parsed.data ?? {},
+      data: parsed.data ?? (parsed.rootCause ? { rootCause: parsed.rootCause, fixFiles: parsed.fixFiles, commitMessage: parsed.commitMessage, regressionRisk: parsed.regressionRisk } : {}),
       tokensInput: 0,
       tokensOutput: 0,
       durationMs: 0,

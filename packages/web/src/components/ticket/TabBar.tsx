@@ -19,20 +19,20 @@ interface TabBarProps {
 export function TabBar({ activeTab, onTabChange, commentCount, gitCount = 0 }: TabBarProps) {
   const tabs: Tab[] = [
     { id: 'story',     icon: <Icons.User />,    label: 'Story' },
+    { id: 'diff',      icon: <Icons.Code />,    label: 'Diff' },
+    { id: 'reasoning', icon: <Icons.Brain />,   label: 'Reasoning' },
     { id: 'pipeline',  icon: <Icons.Brain />,   label: 'Pipeline' },
     { id: 'chat',      icon: <Icons.Chat />,    label: 'Chat' },
     { id: 'tests',     icon: <Icons.Code />,    label: 'Tests' },
     { id: 'activity',  icon: <Icons.History />, label: 'Activity' },
-    { id: 'reasoning', icon: <Icons.Brain />,   label: 'Reasoning' },
     { id: 'git',       icon: <Icons.Git />,     label: gitCount > 0 ? `Git (${gitCount})` : 'Git' },
     { id: 'comments',  icon: <Icons.Chat />,    label: `Comments (${commentCount})` },
-    { id: 'diff',      icon: <Icons.Code />,    label: 'Diff' },
     { id: 'history',   icon: <Icons.History />, label: 'History' },
     { id: 'media',     icon: <Icons.Image />,   label: 'Media' },
   ];
 
   return (
-    <div style={{ display: 'flex', borderBottom: '1px solid #1e2330', padding: '0 24px' }}>
+    <div className="tab-bar" style={{ display: 'flex', borderBottom: '1px solid #1e2330', padding: '0 24px', overflowX: 'auto', scrollbarWidth: 'none' }}>
       {tabs.map((t) => (
         <button
           key={t.id}

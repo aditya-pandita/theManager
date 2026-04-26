@@ -23,7 +23,7 @@ export class DocsAgent extends BaseAgent {
       ticketId,
       reasoning: parsed.reasoning ?? { id: 'r1', label: 'Documentation', type: 'decision' },
       confidence: parsed.confidence ?? 0.8,
-      data: parsed.data ?? {},
+      data: parsed.data ?? (parsed.updatedFiles || parsed.changelogEntry ? { updatedFiles: parsed.updatedFiles, changelogEntry: parsed.changelogEntry } : {}),
       tokensInput: 0,
       tokensOutput: 0,
       durationMs: 0,

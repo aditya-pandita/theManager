@@ -18,6 +18,7 @@ import pipelineRouter from './routes/pipeline';
 import testsRouter from './routes/tests';
 import chatRouter from './routes/chat';
 import activityRouter from './routes/activity';
+import bootstrapRouter from './routes/bootstrap';
 
 const app = express();
 const PORT = parseInt(process.env.PORT ?? '3117', 10);
@@ -40,11 +41,12 @@ app.use('/api/tickets/:id/git', ticketGitRouter);
 app.use('/api/export', exportRouter);
 
 // Phase 2 routes
-app.use('/api/agents',   agentsRouter);
-app.use('/api/pipeline', pipelineRouter);
-app.use('/api/tests',    testsRouter);
-app.use('/api/tickets',  chatRouter);
-app.use('/api/activity', activityRouter);
+app.use('/api/agents',    agentsRouter);
+app.use('/api/pipeline',  pipelineRouter);
+app.use('/api/tests',     testsRouter);
+app.use('/api/tickets',   chatRouter);
+app.use('/api/activity',  activityRouter);
+app.use('/api/bootstrap', bootstrapRouter);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));

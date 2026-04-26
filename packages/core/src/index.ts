@@ -41,6 +41,7 @@ export { pipelineService } from './services/pipeline-service';
 export { testService } from './services/test-service';
 export { chatService } from './services/chat-service';
 export { activityService } from './activity/activity-service';
+export { projectBootstrapService } from './services/project-bootstrap-service';
 
 // Agents
 export { agentRegistry, GEMMA_MODEL } from './agents/registry';
