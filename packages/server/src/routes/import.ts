@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ticketService } from '@decidr-code/core';
+import { ticketService, userStoryRepo } from '@decidr-code/core';
 import type { Priority, Status } from '@decidr-code/core';
 import { sendJSON, sendError } from '../utils/http';
 
@@ -80,6 +80,15 @@ function mapStatus(raw: string): Status {
   return STATUS_MAP[raw.toLowerCase()] ?? 'backlog';
 }
 
+function inferRole(issueType: string, tags: string[]): string {
+  const t = (issueType ?? '').toLowerCase();
+  const set = new Set(tags.map((x) => x.toLowerCase()));
+  if (t === 'bug' || set.has('bug')) return 'tester';
+  if (t === 'docs' || set.has('docs')) return 'technical writer';
+  if (t === 'epic' || set.has('epic')) return 'product manager';
+  return 'developer';
+}
+
 function mapTags(labels: string, issueType: string): string[] {
   const tags: string[] = [];
   // Include issue type as a tag (epic/story/task/bug/etc.)
@@ -127,23 +136,40 @@ router.post('/', async (req, res) => {
       const priority = mapPriority(row['Priority'] ?? '');
       const status = mapStatus(row['Status'] ?? '');
       const tags = mapTags(row['Labels'] ?? row['Tags'] ?? '', issueType);
+      const description = (row['Description'] ?? '').trim();
+      const acceptanceCriteria = (row['Acceptance Criteria'] ?? '').trim();
 
-      // Build description from multiple fields when present
+      // Description retains supporting metadata so it stays human-readable, but
+      // acceptance criteria is now lifted onto the user-story record below.
       const descParts: string[] = [];
-      if (row['Description']) descParts.push(row['Description']);
-      if (row['Acceptance Criteria']) descParts.push(`**Acceptance Criteria:**\n${row['Acceptance Criteria']}`);
+      if (description) descParts.push(description);
       if (row['Story Points']) descParts.push(`**Story Points:** ${row['Story Points']}`);
       if (row['Sprint']) descParts.push(`**Sprint:** ${row['Sprint']}`);
       if (row['Issue ID']) descParts.push(`**Original ID:** ${row['Issue ID']}`);
 
       try {
-        await ticketService.createTicket({
+        const ticket = await ticketService.createTicket({
           title,
           description: descParts.join('\n\n') || undefined,
           priority,
           status,
           tags,
         });
+
+        // Always create a user story so agents have a structured spec to read.
+        // Heuristic mapping: the title becomes the "want", the description becomes the "benefit",
+        // and the role is inferred from the issue type (bug → tester, otherwise developer).
+        const role = inferRole(issueType, tags);
+        const want = title;
+        const benefit = description || 'this capability is delivered as described.';
+        await userStoryRepo.upsert(ticket.id, {
+          role,
+          want,
+          benefit,
+          acceptanceCriteria,
+          files: [],
+        });
+
         imported++;
       } catch (err: unknown) {
         errors.push(`"${title}": ${(err as Error).message}`);

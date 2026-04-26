@@ -2,7 +2,7 @@ import { ticketRepo } from '../repositories/ticket-repo';
 import type { StatsResult } from '../types/ticket';
 
 export const statsService = {
-  async getDashboard(): Promise<StatsResult> {
-    return ticketRepo.getStats();
+  async getDashboard(projectId?: string | null): Promise<StatsResult> {
+    return ticketRepo.getStats(projectId ?? undefined);
   },
 };

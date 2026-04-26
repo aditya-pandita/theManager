@@ -8,7 +8,7 @@ export class DebuggerAgent extends BaseAgent {
     const { ticket, contextStore, userFeedback } = input;
     return JSON.stringify({
       task: 'Analyze the failing tests and bug reports. Identify root cause and produce a fix.',
-      ticket: { id: ticket.id, title: ticket.title, description: ticket.description },
+      ticket: { id: ticket.id, title: ticket.title, description: ticket.description, userStory: ticket.userStory ?? null },
       testResults: contextStore['test_results'] ?? null,
       codeFiles: contextStore['code_files'] ?? null,
       userFeedback: userFeedback ?? null,

@@ -35,12 +35,20 @@ export default function App() {
 
   useEffect(() => { fetchMe(); }, []);
 
+  // Fetch the project list once after the user authenticates.
   useEffect(() => {
     if (isAuthenticated) {
       fetchProjects().then(() => setHasInitialized(true));
-      fetchTickets(activeProjectId);
     }
   }, [isAuthenticated]);
+
+  // Refetch the board's tickets whenever the selected project changes.
+  // Without this, clicking a project in the Sidebar updates the highlight
+  // but the board keeps showing the previously-fetched ticket list (which
+  // was the bug: Portfolio view was showing all 47 tickets including F1).
+  useEffect(() => {
+    if (isAuthenticated) fetchTickets(activeProjectId);
+  }, [isAuthenticated, activeProjectId]);
 
   useEffect(() => {
     if (selectedTicketId) setSelectedTicket(tickets.find((t) => t.id === selectedTicketId) ?? null);

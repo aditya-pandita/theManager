@@ -35,6 +35,11 @@ export { checkpointRepo } from './repositories/checkpoint-repo';
 export { ticketService } from './services/ticket-service';
 export { reasoningService } from './services/reasoning-service';
 export { statsService } from './services/stats-service';
+export { flowService } from './services/flow-service';
+export type { FlowsResponse, FlowDiagram, FlowNode, FlowEdge } from './services/flow-service';
+export { projectFilesService } from './services/project-files-service';
+export type { ProjectFilesResult } from './services/project-files-service';
+export { formatUserStory } from './utils/format-user-story';
 export { projectService } from './services/project-service';
 export { gitService } from './services/git-service';
 export { generateMarkdown, generateHtml } from './services/doc-generator';
@@ -50,6 +55,7 @@ export { inviteRepo } from './repositories/invite-repo';
 
 // Agents
 export { agentRegistry, GEMMA_MODEL } from './agents/registry';
+export { safeJsonParse } from './agents/base-agent';
 export { orchestrator } from './agents/orchestrator';
 export { contextStore } from './agents/context-store';
 

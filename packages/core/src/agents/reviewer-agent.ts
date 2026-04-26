@@ -8,7 +8,7 @@ export class ReviewerAgent extends BaseAgent {
     const { ticket, contextStore, userFeedback } = input;
     return JSON.stringify({
       task: 'Review the generated code for correctness, security, style, and design fit.',
-      ticket: { id: ticket.id, title: ticket.title, description: ticket.description },
+      ticket: { id: ticket.id, title: ticket.title, description: ticket.description, userStory: ticket.userStory ?? null },
       codeFiles: contextStore['code_files'] ?? null,
       design: contextStore['design'] ?? null,
       testResults: contextStore['test_results'] ?? null,

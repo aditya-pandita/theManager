@@ -12,10 +12,10 @@ export function PipelineControls({ ticketId }: { ticketId: string }) {
 
   const Btn = ({ icon, label, onClick, variant = 'secondary', disabled = false }: { icon: React.ReactNode; label: string; onClick: () => void; variant?: 'primary' | 'secondary' | 'warning' | 'danger'; disabled?: boolean }) => {
     const v = {
-      primary:   { bg: '#2563eb', color: '#fff',     border: 'none' },
-      secondary: { bg: '#fff',    color: '#64748b',  border: '1px solid #e2e8f0' },
-      warning:   { bg: '#fffbeb', color: '#d97706',  border: '1px solid #fde68a' },
-      danger:    { bg: '#fef2f2', color: '#dc2626',  border: '1px solid #fecaca' },
+      primary:   { background: '#2563eb', color: '#fff',     border: 'none' },
+      secondary: { background: '#fff',    color: '#64748b',  border: '1px solid #e2e8f0' },
+      warning:   { background: '#fffbeb', color: '#d97706',  border: '1px solid #fde68a' },
+      danger:    { background: '#fef2f2', color: '#dc2626',  border: '1px solid #fecaca' },
     }[variant];
     return (
       <button onClick={onClick} disabled={disabled} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1, ...v }}>

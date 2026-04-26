@@ -8,7 +8,7 @@ export class DocsAgent extends BaseAgent {
     const { ticket, contextStore, userFeedback } = input;
     return JSON.stringify({
       task: 'Update README, JSDoc comments, and changelog based on the code changes made.',
-      ticket: { id: ticket.id, title: ticket.title, description: ticket.description },
+      ticket: { id: ticket.id, title: ticket.title, description: ticket.description, userStory: ticket.userStory ?? null },
       codeFiles: contextStore['code_files'] ?? null,
       review: contextStore['review'] ?? null,
       userFeedback: userFeedback ?? null,

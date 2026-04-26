@@ -6,11 +6,10 @@ export class TesterAgent extends BaseAgent {
 
   buildPrompt(input: AgentInput): string {
     const { ticket, contextStore, userFeedback } = input;
-    const story = (ticket as any).userStory;
     return JSON.stringify({
       task: 'Generate a comprehensive test suite for this ticket. Tests should initially fail (Red phase).',
-      ticket: { id: ticket.id, title: ticket.title, description: ticket.description },
-      acceptanceCriteria: story?.acceptanceCriteria ?? '',
+      ticket: { id: ticket.id, title: ticket.title, description: ticket.description, userStory: ticket.userStory ?? null },
+      acceptanceCriteria: ticket.userStory?.acceptanceCriteria ?? '',
       codeFiles: contextStore['code_files'] ?? null,
       userFeedback: userFeedback ?? null,
       instructions: 'Return JSON: { "summary": string, "confidence": number, "reasoning": { "id":"r1","label":"...","type":"decision","children":[] }, "data": { "testFiles": [{ "path": string, "content": string }], "results": { "total": number, "passed": number, "failed": number, "coverageDelta": number }, "bugsCreated": [{ "title": string, "severity": "critical"|"high"|"medium"|"low", "description": string }] } }',

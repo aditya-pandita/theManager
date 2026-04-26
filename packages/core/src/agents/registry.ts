@@ -8,9 +8,12 @@ import { TesterAgent } from './tester-agent';
 import { DebuggerAgent } from './debugger-agent';
 import { DocsAgent } from './docs-agent';
 
-// Gemma 4 27B — free tier, served via Google Generative AI API (same GEMINI_KEY).
-// Does NOT support thinkingConfig — base-agent detects 'gemma' prefix and skips it.
-export const GEMMA_MODEL = 'gemma-3-27b-it';
+// Gemma 4 26B Mixture-of-Experts — open-weight, Apache 2.0, served via the
+// Gemini API (same GEMINI_KEY). Verified to accept `systemInstruction` and
+// `responseMimeType: 'application/json'`. Rejects `thinkingConfig` — base-agent
+// detects the 'gemma' prefix and skips that field. Has thinking tokens that
+// count against `maxOutputTokens`, so token budgets leave headroom for both.
+export const GEMMA_MODEL = 'gemma-4-26b-a4b-it';
 
 const DEFAULT_CONFIGS: Record<AgentName, AgentConfig> = {
   planner: {

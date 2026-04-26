@@ -8,7 +8,7 @@ export class ArchitectAgent extends BaseAgent {
     const { ticket, contextStore, userFeedback } = input;
     return JSON.stringify({
       task: 'Design the technical solution and generate scaffold files at their real project paths.',
-      ticket: { id: ticket.id, title: ticket.title, description: ticket.description, priority: ticket.priority, tags: ticket.tags },
+      ticket: { id: ticket.id, title: ticket.title, description: ticket.description, priority: ticket.priority, tags: ticket.tags, userStory: ticket.userStory ?? null },
       plan: contextStore['plan'] ?? null,
       projectStructure: contextStore['projectStructure'] ?? null,
       userFeedback: userFeedback ?? null,

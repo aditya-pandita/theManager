@@ -1,10 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../../api/client';
+import { useProjectStore } from '../../stores/project-store';
 import type { UserStory } from '../../types';
 
 interface Props {
   ticketId: string;
   initial?: UserStory | null;
+}
+
+interface ProjectFilesResult {
+  folderPath: string | null;
+  gitRepoUrl: string | null;
+  files: string[];
+  truncated: boolean;
+  hint?: string;
 }
 
 const fieldStyle = {
@@ -25,7 +34,12 @@ export function UserStoryTab({ ticketId, initial }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Load from server if not pre-loaded
+  const activeProjectId = useProjectStore((s) => s.activeProjectId);
+  const [filesResult, setFilesResult] = useState<ProjectFilesResult | null>(null);
+  const lastFetchedQuery = useRef('');
+  const datalistId = `files-${ticketId}`;
+
+  // Load existing story if not pre-loaded.
   useEffect(() => {
     if (!initial) {
       api.get<UserStory>(`/api/tickets/${ticketId}/user-story`).then((s) => {
@@ -39,6 +53,22 @@ export function UserStoryTab({ ticketId, initial }: Props) {
       }).catch(() => {});
     }
   }, [ticketId, initial]);
+
+  // Debounced file suggestions: refetch when the user has paused typing.
+  useEffect(() => {
+    if (!activeProjectId) return;
+    const q = newFile.trim();
+    if (q === lastFetchedQuery.current) return;
+
+    const handle = setTimeout(() => {
+      lastFetchedQuery.current = q;
+      api.get<ProjectFilesResult>(`/api/projects/${activeProjectId}/files?q=${encodeURIComponent(q)}`)
+        .then((res) => setFilesResult(res))
+        .catch(() => {});
+    }, 200);
+
+    return () => clearTimeout(handle);
+  }, [activeProjectId, newFile]);
 
   async function save() {
     setSaving(true);
@@ -61,18 +91,17 @@ export function UserStoryTab({ ticketId, initial }: Props) {
     ? `As ${role || 'a user'}, I want ${want || '...'} so that ${benefit || '...'}`
     : '';
 
+  const hint = filesResult?.hint;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-      {/* Formatted preview */}
       {formatted && (
-        <div style={{ background: '#0c0e14', border: '1px solid #6366f130', borderRadius: '10px', padding: '14px 16px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: '#6366f1', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>User Story</div>
-          <div style={{ color: '#c7d2fe', fontSize: '13px', fontStyle: 'italic', lineHeight: 1.6 }}>"{formatted}"</div>
+        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '14px 16px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#2563eb', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>User Story</div>
+          <div style={{ color: '#1e293b', fontSize: '13px', fontStyle: 'italic', lineHeight: 1.6 }}>"{formatted}"</div>
         </div>
       )}
 
-      {/* Role */}
       <div>
         <label style={labelStyle}>As a… (role)</label>
         <input
@@ -83,7 +112,6 @@ export function UserStoryTab({ ticketId, initial }: Props) {
         />
       </div>
 
-      {/* Want */}
       <div>
         <label style={labelStyle}>I want… (feature / action)</label>
         <textarea
@@ -95,7 +123,6 @@ export function UserStoryTab({ ticketId, initial }: Props) {
         />
       </div>
 
-      {/* Benefit */}
       <div>
         <label style={labelStyle}>So that… (benefit / outcome)</label>
         <textarea
@@ -107,7 +134,6 @@ export function UserStoryTab({ ticketId, initial }: Props) {
         />
       </div>
 
-      {/* Acceptance Criteria */}
       <div>
         <label style={labelStyle}>Acceptance Criteria</label>
         <textarea
@@ -119,14 +145,13 @@ export function UserStoryTab({ ticketId, initial }: Props) {
         />
       </div>
 
-      {/* Files */}
       <div>
         <label style={labelStyle}>Referenced Files</label>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
           {files.map((f, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0c0e14', border: '1px solid #1e2330', borderRadius: '6px', padding: '6px 10px' }}>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#93c5fd', flex: 1 }}>{f}</span>
-              <button onClick={() => setFiles(files.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', fontSize: '12px', padding: '0 2px' }}>×</button>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 10px' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#1d4ed8', flex: 1 }}>{f}</span>
+              <button onClick={() => setFiles(files.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', padding: '0 2px' }}>×</button>
             </div>
           ))}
         </div>
@@ -136,20 +161,38 @@ export function UserStoryTab({ ticketId, initial }: Props) {
             onChange={(e) => setNewFile(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') addFile(); }}
             placeholder="src/components/Toolbar.tsx"
+            list={filesResult?.files?.length ? datalistId : undefined}
             style={{ ...fieldStyle, flex: 1, resize: 'none' as unknown as 'vertical' }}
           />
-          <button onClick={addFile} style={{ padding: '8px 14px', background: '#172554', border: '1px solid #1d4ed8', borderRadius: '8px', color: '#93c5fd', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}>
+          {filesResult?.files?.length ? (
+            <datalist id={datalistId}>
+              {filesResult.files.slice(0, 100).map((f) => (
+                <option key={f} value={f} />
+              ))}
+            </datalist>
+          ) : null}
+          <button onClick={addFile} style={{ padding: '8px 14px', background: '#2563eb', border: '1px solid #2563eb', borderRadius: '8px', color: '#fff', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', fontWeight: 600 }}>
             + Add
           </button>
         </div>
+        {hint && (
+          <div style={{ marginTop: 6, color: '#94a3b8', fontSize: 11 }}>
+            {hint}
+          </div>
+        )}
+        {!hint && filesResult && filesResult.folderPath && (
+          <div style={{ marginTop: 6, color: '#94a3b8', fontSize: 11 }}>
+            Suggestions from <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{filesResult.folderPath}</span>
+            {filesResult.truncated ? ' (truncated)' : ''}
+          </div>
+        )}
       </div>
 
-      {/* Save */}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
           onClick={save}
           disabled={saving}
-          style={{ padding: '9px 24px', background: saved ? '#14532d' : 'linear-gradient(135deg, #3B82F6, #2563EB)', border: 'none', borderRadius: '8px', color: '#fff', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}
+          style={{ padding: '9px 24px', background: saved ? '#16a34a' : '#2563eb', border: 'none', borderRadius: '8px', color: '#fff', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}
         >
           {saved ? '✓ Saved' : saving ? 'Saving…' : 'Save Story'}
         </button>

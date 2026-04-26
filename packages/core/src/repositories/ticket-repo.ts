@@ -107,12 +107,23 @@ export const ticketRepo = {
     return result as unknown as Ticket[];
   },
 
-  async getStats(): Promise<StatsResult> {
-    const all = await db.select().from(tickets);
-    const [reasoningCount] = await db.select({ count: count() }).from(reasoning);
-    const [conf] = await db
-      .select({ avg: avg(reasoning.confidence), sum: sum(reasoning.timeMs) })
-      .from(reasoning);
+  async getStats(projectId?: string | null): Promise<StatsResult> {
+    const ticketWhere = projectId ? eq(tickets.projectId, projectId) : undefined;
+    const all = ticketWhere
+      ? await db.select().from(tickets).where(ticketWhere)
+      : await db.select().from(tickets);
+
+    // Reasoning rows live on tickets — when a project is selected, restrict via a join.
+    const reasoningQuery = projectId
+      ? db
+          .select({ count: count(), avg: avg(reasoning.confidence), sum: sum(reasoning.timeMs) })
+          .from(reasoning)
+          .innerJoin(tickets, eq(tickets.id, reasoning.ticketId))
+          .where(eq(tickets.projectId, projectId))
+      : db
+          .select({ count: count(), avg: avg(reasoning.confidence), sum: sum(reasoning.timeMs) })
+          .from(reasoning);
+    const [reasoningAgg] = await reasoningQuery;
 
     const byStatus = all.reduce((acc, t) => {
       acc[t.status as Status] = (acc[t.status as Status] ?? 0) + 1;
@@ -128,9 +139,9 @@ export const ticketRepo = {
       total: all.length,
       byStatus,
       byPriority,
-      withReasoning: Number(reasoningCount?.count ?? 0),
-      avgConfidence: Number(conf?.avg ?? 0),
-      totalReasoningTime: Number(conf?.sum ?? 0),
+      withReasoning: Number(reasoningAgg?.count ?? 0),
+      avgConfidence: Number(reasoningAgg?.avg ?? 0),
+      totalReasoningTime: Number(reasoningAgg?.sum ?? 0),
     };
   },
 };

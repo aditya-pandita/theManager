@@ -16,7 +16,7 @@ export function ReasoningTab({ reasoning }: ReasoningTabProps) {
     return (
       <div style={{ color: '#4B5563', textAlign: 'center', padding: '40px', fontStyle: 'italic' }}>
         <div style={{ marginBottom: '8px' }}><Icons.Brain /></div>
-        No reasoning data yet. Click "Ask Claude to Process" in the Diff tab to generate reasoning.
+        No reasoning data yet. Click "Ask Gemma to Process" in the Diff tab to generate reasoning.
       </div>
     );
   }

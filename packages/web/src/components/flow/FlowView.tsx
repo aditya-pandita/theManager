@@ -1,120 +1,216 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../../api/client';
+import { useProjectStore } from '../../stores/project-store';
 
 type FlowType = 'architecture' | 'dataflow' | 'lifecycle' | 'reasoning';
 
-const NODES = {
-  architecture: [
-    { id: 'core', label: 'core', x: 200, y: 100 },
-    { id: 'server', label: 'server', x: 80, y: 200 },
-    { id: 'mcp', label: 'mcp', x: 200, y: 200 },
-    { id: 'web', label: 'web', x: 320, y: 200 },
-    { id: 'file-bridge', label: 'file-bridge', x: 200, y: 280 },
-  ],
-  dataflow: [
-    { id: 'ui', label: 'User Action', x: 200, y: 60 },
-    { id: 'store', label: 'Zustand Store', x: 200, y: 140 },
-    { id: 'api', label: 'REST API', x: 200, y: 220 },
-    { id: 'service', label: 'Service', x: 200, y: 300 },
-    { id: 'repo', label: 'Repository', x: 200, y: 380 },
-    { id: 'db', label: 'PostgreSQL', x: 200, y: 460 },
-  ],
-  lifecycle: [
-    { id: 'backlog', label: 'Backlog', x: 80, y: 120 },
-    { id: 'todo', label: 'Todo', x: 200, y: 120 },
-    { id: 'in_progress', label: 'In Progress', x: 320, y: 120 },
-    { id: 'review', label: 'Review', x: 440, y: 120 },
-    { id: 'done', label: 'Done', x: 560, y: 120 },
-  ],
-  reasoning: [
-    { id: 'ticket', label: 'Ticket', x: 200, y: 80 },
-    { id: 'agent', label: 'Agent Router', x: 200, y: 160 },
-    { id: 'claude', label: 'Claude API', x: 200, y: 240 },
-    { id: 'tree', label: 'Reasoning Tree', x: 200, y: 320 },
-    { id: 'diff', label: 'Diff', x: 200, y: 400 },
-  ],
-};
+interface FlowNode {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  count?: number;
+  color?: string;
+  meta?: Record<string, unknown>;
+}
 
-const EDGES: Record<FlowType, [string, string][]> = {
-  architecture: [
-    ['server', 'core'],
-    ['mcp', 'core'],
-    ['web', 'server'],
-    ['file-bridge', 'core'],
-  ],
-  dataflow: [
-    ['ui', 'store'],
-    ['store', 'api'],
-    ['api', 'service'],
-    ['service', 'repo'],
-    ['repo', 'db'],
-  ],
-  lifecycle: [
-    ['backlog', 'todo'],
-    ['todo', 'in_progress'],
-    ['in_progress', 'review'],
-    ['review', 'done'],
-  ],
-  reasoning: [
-    ['ticket', 'agent'],
-    ['agent', 'claude'],
-    ['claude', 'tree'],
-    ['claude', 'diff'],
-  ],
-};
+interface FlowEdge {
+  from: string;
+  to: string;
+  weight?: number;
+  label?: string;
+}
+
+interface FlowDiagram {
+  hasData: boolean;
+  emptyMessage?: string;
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+}
+
+interface FlowsResponse {
+  hasTickets: boolean;
+  hasReasoning: boolean;
+  ticketCount: number;
+  reasoningCount: number;
+  architecture: FlowDiagram;
+  dataflow: FlowDiagram;
+  lifecycle: FlowDiagram;
+  reasoning: FlowDiagram;
+}
+
+const TABS: Array<{ id: FlowType; label: string; needsReasoning?: boolean }> = [
+  { id: 'architecture', label: 'Architecture' },
+  { id: 'dataflow',     label: 'Dataflow' },
+  { id: 'lifecycle',    label: 'Lifecycle',    needsReasoning: true },
+  { id: 'reasoning',    label: 'Reasoning',    needsReasoning: true },
+];
+
+function nodeCenter(n: FlowNode) {
+  return { x: n.x + n.w / 2, y: n.y + n.h / 2 };
+}
+
+function FlowCanvas({ diagram }: { diagram: FlowDiagram }) {
+  const [hovered, setHovered] = useState<FlowNode | null>(null);
+
+  if (!diagram.hasData) {
+    return (
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '48px 24px', textAlign: 'center' }}>
+        <div style={{ color: '#64748b', fontSize: '13px' }}>{diagram.emptyMessage}</div>
+      </div>
+    );
+  }
+
+  const nodeById = new Map(diagram.nodes.map((n) => [n.id, n]));
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px', overflow: 'auto', position: 'relative' }}>
+      <svg width="640" height="520" style={{ display: 'block', margin: '0 auto' }}>
+        <defs>
+          <marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+          </marker>
+        </defs>
+
+        {diagram.edges.map((e, i) => {
+          const a = nodeById.get(e.from);
+          const b = nodeById.get(e.to);
+          if (!a || !b) return null;
+          const ca = nodeCenter(a);
+          const cb = nodeCenter(b);
+          const mid = { x: (ca.x + cb.x) / 2, y: (ca.y + cb.y) / 2 };
+          return (
+            <g key={i}>
+              <line
+                x1={ca.x} y1={ca.y} x2={cb.x} y2={cb.y}
+                stroke="#cbd5e1" strokeWidth={Math.min(3, 1 + (e.weight ?? 0))}
+                opacity={0.85}
+                markerEnd="url(#flow-arrow)"
+              />
+              {e.label && (
+                <g>
+                  <rect x={mid.x - 16} y={mid.y - 9} width={32} height={18} rx={4} fill="#fff" stroke="#e2e8f0" />
+                  <text x={mid.x} y={mid.y + 3} textAnchor="middle" fontSize="10" fontWeight={600} fill="#64748b">{e.label}</text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+
+        {diagram.nodes.map((n) => {
+          const fill = n.color ? `${n.color}1a` : '#eff6ff';
+          const stroke = n.color ?? '#3B82F6';
+          const textColor = n.color ?? '#1e293b';
+          return (
+            <g key={n.id}
+               style={{ cursor: n.meta ? 'pointer' : 'default' }}
+               onMouseEnter={() => n.meta && setHovered(n)}
+               onMouseLeave={() => setHovered(null)}
+            >
+              <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={8} fill={fill} stroke={stroke} strokeWidth="1.5" />
+              <text x={n.x + n.w / 2} y={n.y + n.h / 2 + (n.count !== undefined ? -2 : 4)} textAnchor="middle" fill={textColor} fontSize="12" fontWeight="600">
+                {n.label}
+              </text>
+              {n.count !== undefined && (
+                <text x={n.x + n.w / 2} y={n.y + n.h / 2 + 12} textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">
+                  {n.count} {n.count === 1 ? 'ticket' : 'tickets'}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      {hovered?.meta && (
+        <div style={{ position: 'absolute', top: 12, right: 12, maxWidth: 280, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '10px 12px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>{(hovered.meta.title as string) ?? hovered.label}</div>
+          {typeof hovered.meta.confidence === 'number' && (
+            <div style={{ fontSize: 11, color: hovered.color ?? '#64748b', fontWeight: 600, marginBottom: 4 }}>
+              Confidence: {Math.round((hovered.meta.confidence as number) * 100)}%
+            </div>
+          )}
+          {typeof hovered.meta.summary === 'string' && hovered.meta.summary.length > 0 && (
+            <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.4 }}>{hovered.meta.summary}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function FlowView() {
+  const activeProjectId = useProjectStore((s) => s.activeProjectId);
+  const [data, setData] = useState<FlowsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [flow, setFlow] = useState<FlowType>('architecture');
-  const nodes = NODES[flow];
-  const edges = EDGES[flow];
+
+  useEffect(() => {
+    setLoading(true);
+    const qs = activeProjectId ? `?projectId=${encodeURIComponent(activeProjectId)}` : '';
+    api.get<FlowsResponse>(`/api/flows${qs}`)
+      .then((res) => { setData(res); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [activeProjectId]);
+
+  if (loading) {
+    return <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading flows…</div>;
+  }
+  if (!data) {
+    return <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Failed to load flows.</div>;
+  }
+
+  if (!data.hasTickets) {
+    return (
+      <div style={{ padding: '24px 28px' }}>
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{ color: '#1e293b', fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>No flow data yet</div>
+          <div style={{ color: '#94a3b8', fontSize: '13px' }}>Create some tickets in this project to see its flows.</div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeDiagram = data[flow];
 
   return (
     <div style={{ padding: '24px 28px' }}>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-        {(['architecture', 'dataflow', 'lifecycle', 'reasoning'] as FlowType[]).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFlow(f)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: `1px solid ${flow === f ? '#3B82F6' : '#1e2330'}`,
-              background: flow === f ? '#172554' : 'transparent',
-              color: flow === f ? '#93c5fd' : '#6B7280',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: 600,
-              textTransform: 'capitalize',
-            }}
-          >
-            {f.replace(/([A-Z])/g, ' $1').trim()}
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const isLocked = t.needsReasoning && !data.hasReasoning;
+          const isActive = flow === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => !isLocked && setFlow(t.id)}
+              title={isLocked ? 'Available once tickets have reasoning attached.' : undefined}
+              disabled={isLocked}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: `1px solid ${isActive ? '#3B82F6' : '#e2e8f0'}`,
+                background: isActive ? '#eff6ff' : '#fff',
+                color: isLocked ? '#cbd5e1' : isActive ? '#2563eb' : '#64748b',
+                cursor: isLocked ? 'not-allowed' : 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              {t.label}
+              {isLocked && <span style={{ fontSize: 10 }}>🔒</span>}
+            </button>
+          );
+        })}
       </div>
 
-      <div style={{ background: '#0c0e14', border: '1px solid #1e2330', borderRadius: '12px', padding: '24px', overflow: 'auto' }}>
-        <svg width="640" height="520" style={{ display: 'block', margin: '0 auto' }}>
-          {edges.map(([from, to], i) => {
-            const n1 = nodes.find((n) => n.id === from)!;
-            const n2 = nodes.find((n) => n.id === to)!;
-            const midX = (n1.x + n2.x) / 2;
-            const midY = (n1.y + n2.y) / 2;
-            return (
-              <g key={i}>
-                <line x1={n1.x + 60} y1={n1.y + 20} x2={midX + 10} y2={midY} stroke="#3B82F6" strokeWidth="1.5" opacity={0.6} />
-                <line x1={midX + 10} y1={midY} x2={n2.x + 60} y2={n2.y + 20} stroke="#3B82F6" strokeWidth="1.5" opacity={0.6} />
-                <polygon points={`${n2.x + 60},${n2.y + 20} ${n2.x + 55},${n2.y + 10} ${n2.x + 55},${n2.y + 30}`} fill="#3B82F6" opacity={0.8} />
-              </g>
-            );
-          })}
-          {nodes.map((n) => (
-            <g key={n.id}>
-              <rect x={n.x} y={n.y} width="120" height="40" rx="8" fill="#1e2330" stroke="#3B82F6" strokeWidth="1.5" />
-              <text x={n.x + 60} y={n.y + 25} textAnchor="middle" fill="#e2e8f0" fontSize="12" fontWeight="600">
-                {n.label}
-              </text>
-            </g>
-          ))}
-        </svg>
+      <FlowCanvas diagram={activeDiagram} />
+
+      <div style={{ marginTop: 12, color: '#94a3b8', fontSize: 11 }}>
+        {data.ticketCount} ticket{data.ticketCount === 1 ? '' : 's'} · {data.reasoningCount} with reasoning
       </div>
     </div>
   );

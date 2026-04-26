@@ -8,7 +8,7 @@ export class CoderAgent extends BaseAgent {
     const { ticket, contextStore, userFeedback } = input;
     return JSON.stringify({
       task: 'Implement complete working code files at their real project paths (relative to project root, not inside decidr/).',
-      ticket: { id: ticket.id, title: ticket.title, description: ticket.description, priority: ticket.priority, tags: ticket.tags },
+      ticket: { id: ticket.id, title: ticket.title, description: ticket.description, priority: ticket.priority, tags: ticket.tags, userStory: ticket.userStory ?? null },
       plan: contextStore['plan'] ?? null,
       design: contextStore['design'] ?? null,
       projectStructure: contextStore['projectStructure'] ?? null,

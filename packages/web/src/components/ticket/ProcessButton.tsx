@@ -28,7 +28,7 @@ export function ProcessButton({ ticketId, onProcessed }: ProcessButtonProps) {
     return (
       <div style={{ marginTop: '16px', padding: '16px', borderRadius: '10px', border: '1px solid #A855F730', background: '#A855F708', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid #A855F7', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
-        <span style={{ color: '#c084fc', fontSize: '13px' }}>Claude is analyzing and generating changes...</span>
+        <span style={{ color: '#c084fc', fontSize: '13px' }}>Gemma is analyzing and generating changes...</span>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export function ProcessButton({ ticketId, onProcessed }: ProcessButtonProps) {
         onMouseEnter={(e) => (e.currentTarget.style.background = 'linear-gradient(135deg, #A855F720, #3B82F620)')}
         onMouseLeave={(e) => (e.currentTarget.style.background = 'linear-gradient(135deg, #A855F710, #3B82F610)')}
       >
-        <Icons.Sparkle /> Ask Claude to Process
+        <Icons.Sparkle /> Ask Gemma to Process
       </button>
     </div>
   );
